@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS caracteristique (
   type        ENUM('liste','texte') NOT NULL DEFAULT 'liste',
   obligatoire TINYINT(1) NOT NULL DEFAULT 0,
   ordre       SMALLINT NOT NULL DEFAULT 0
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS caracteristique_option (
   id                 INT AUTO_INCREMENT PRIMARY KEY,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS caracteristique_option (
   ordre              SMALLINT NOT NULL DEFAULT 0,
   UNIQUE (id_caracteristique, valeur),
   FOREIGN KEY (id_caracteristique) REFERENCES caracteristique(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS categorie_caracteristique (
   id_categorie       INT NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS categorie_caracteristique (
   PRIMARY KEY (id_categorie, id_caracteristique),
   FOREIGN KEY (id_categorie)       REFERENCES categorie(id) ON DELETE CASCADE,
   FOREIGN KEY (id_caracteristique) REFERENCES caracteristique(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS objet_caracteristique (
   id_objet           INT NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS objet_caracteristique (
   FOREIGN KEY (id_objet)           REFERENCES objet(id) ON DELETE CASCADE,
   FOREIGN KEY (id_caracteristique) REFERENCES caracteristique(id) ON DELETE CASCADE,
   FOREIGN KEY (id_option)          REFERENCES caracteristique_option(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------- Ordre d'affichage des catégories principales ----------
 UPDATE categorie SET ordre = 1 WHERE nom = 'Vêtements';

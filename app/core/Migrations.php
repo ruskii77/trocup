@@ -51,7 +51,7 @@ class Migrations
         $pdo->exec('CREATE TABLE IF NOT EXISTS migration (
                         nom  VARCHAR(255) PRIMARY KEY,
                         date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-                    ) ENGINE=InnoDB');
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
 
         $faites = [];
         foreach (self::enAttente() as $fichier) {
