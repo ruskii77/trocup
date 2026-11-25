@@ -2,10 +2,13 @@
 class Objet
 {
     // Requête de base : l'objet + le pseudo/ville/département du propriétaire + le nom de la catégorie
-    private const SELECT = 'SELECT o.*, u.pseudo, u.ville, u.departement, u.avatar, c.nom AS categorie
+    // (+ la catégorie principale si l'annonce est dans une sous-catégorie)
+    private const SELECT = 'SELECT o.*, u.pseudo, u.ville, u.departement, u.avatar, c.nom AS categorie,
+                                   cp.id AS id_categorie_parente, cp.nom AS categorie_parente
                             FROM objet o
                             JOIN utilisateur u ON u.id = o.id_utilisateur
-                            JOIN categorie c ON c.id = o.id_categorie';
+                            JOIN categorie c ON c.id = o.id_categorie
+                            LEFT JOIN categorie cp ON cp.id = c.id_parent';
 
     // Les tris autorisés (liste blanche : on ne met JAMAIS directement $_GET dans un ORDER BY)
     public const TRIS = [
@@ -26,8 +29,22 @@ class Objet
             $params[] = '%' . $f['q'] . '%';
         }
         if ($f['categorie']) {
-            $where .= ' AND o.id_categorie = ?';
+            // Une catégorie principale inclut toutes ses sous-catégories
+            $where .= ' AND (o.id_categorie = ? OR c.id_parent = ?)';
             $params[] = $f['categorie'];
+            $params[] = $f['categorie'];
+        }
+        // Filtres propres à la catégorie (Taille, Pointure, Plateforme…) : l'annonce doit avoir la bonne valeur
+        foreach ($f['caracs'] ?? [] as $idCarac => $filtre) {
+            if ($filtre['type'] === 'liste') {
+                $where .= ' AND EXISTS (SELECT 1 FROM objet_caracteristique oc WHERE oc.id_objet = o.id AND oc.id_caracteristique = ? AND oc.id_option = ?)';
+                $params[] = $idCarac;
+                $params[] = $filtre['valeur'];
+            } else {
+                $where .= ' AND EXISTS (SELECT 1 FROM objet_caracteristique oc WHERE oc.id_objet = o.id AND oc.id_caracteristique = ? AND oc.valeur_texte LIKE ?)';
+                $params[] = $idCarac;
+                $params[] = '%' . addcslashes($filtre['valeur'], '%_\\') . '%';
+            }
         }
         if ($f['departement'] !== '') {
             $where .= ' AND u.departement = ?';

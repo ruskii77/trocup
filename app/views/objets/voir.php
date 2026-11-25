@@ -28,7 +28,12 @@ $connecte = utilisateur_connecte();
             <div class="alerte alerte-erreur">Annonce retirée (visible seulement par l'admin).</div>
         <?php endif; ?>
         <div class="fiche-haut">
-            <span class="badge"><?= e($objet['categorie']) ?></span>
+            <nav class="fil-categorie" aria-label="Catégorie">
+                <?php if ($objet['categorie_parente']): ?>
+                    <a href="<?= url('objet/recherche', ['categorie' => $objet['id_categorie_parente']]) ?>"><?= e($objet['categorie_parente']) ?></a> ›
+                <?php endif; ?>
+                <a href="<?= url('objet/recherche', ['categorie' => $objet['id_categorie']]) ?>" class="badge"><?= e($objet['categorie']) ?></a>
+            </nav>
             <?php if ($connecte && !$estProprio && $objet['statut'] === 'disponible'): ?>
                 <form method="post" action="<?= url('objet/favori') ?>">
                     <?= csrf_champ() ?><input type="hidden" name="id" value="<?= $objet['id'] ?>">
@@ -42,6 +47,13 @@ $connecte = utilisateur_connecte();
         <p class="valeur grande">≈ <?= prix((float) $objet['valeur_estimee']) ?></p>
         <p><strong>État :</strong> <?= libelle_etat($objet['etat']) ?>
             <?php if ($nbFavoris > 0): ?><span class="petit"> · ❤️ <?= $nbFavoris ?> personne<?= $nbFavoris > 1 ? 's' : '' ?> intéressée<?= $nbFavoris > 1 ? 's' : '' ?></span><?php endif; ?></p>
+        <?php if ($caracteristiques): ?>
+            <dl class="fiche-caracs">
+                <?php foreach ($caracteristiques as $c): ?>
+                    <div><dt><?= e($c['nom']) ?></dt><dd><?= e($c['valeur']) ?></dd></div>
+                <?php endforeach; ?>
+            </dl>
+        <?php endif; ?>
         <p class="description"><?= nl2br(e($objet['description'])) ?></p>
 
         <a href="<?= url('utilisateur/profil', ['id' => $objet['id_utilisateur']]) ?>" class="bloc-proprio">

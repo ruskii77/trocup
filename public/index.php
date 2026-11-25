@@ -79,6 +79,8 @@ $routes = [
     'maj/index'              => ['MajController', 'index'],
     'cookies/journal'        => ['CookiesController', 'journal'],
     'admin/nettoyer'         => ['AdminController', 'nettoyer'],
+    'admin/categories'       => ['AdminController', 'categories'],
+    'page/concept'           => ['PageController', 'concept'],
 ];
 
 try {

@@ -24,7 +24,7 @@
             <?php else: ?>
                 <a href="<?= url('utilisateur/inscription') ?>" class="bouton bouton-grand">Commencer ma chaîne — gratuit</a>
             <?php endif; ?>
-            <a href="#comment" class="lien-fort">Comment ça marche ?</a>
+            <a href="<?= url('page/concept') ?>" class="lien-fort">Comment ça marche ?</a>
         </div>
     </div>
 
@@ -107,6 +107,7 @@
         <div><span>2</span><strong>Propose un échange</strong><p class="petit">Repère un objet un peu plus intéressant et propose le tien. Discutez par message.</p></div>
         <div><span>3</span><strong>Monte d'un cran</strong><p class="petit">L'échange est accepté ? Tu recommences avec l'objet reçu. Ta chaîne s'affiche sur ton profil.</p></div>
     </div>
+    <p><a href="<?= url('page/concept') ?>" class="lien-fort">Tout comprendre en 2 minutes : l'histoire, les règles, la sécurité →</a></p>
 </section>
 
 <section class="avantages">

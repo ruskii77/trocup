@@ -6,11 +6,26 @@ $lienPage = function (int $p) use ($filtres): string {
         'etat' => $filtres['etat'], 'valeur_min' => $filtres['valeur_min'], 'valeur_max' => $filtres['valeur_max'],
         'tri' => $filtres['tri'] !== 'recent' ? $filtres['tri'] : null,
     ], fn($v) => $v !== null && $v !== '');
-    return url('objet/recherche', $params + ['page' => $p]);
+    // Les filtres propres à la catégorie : c[3]=12&c[8]=nike
+    $caracs = array_map(fn($f) => $f['valeur'], $filtres['caracs']);
+    return url('objet/recherche', $params + ($caracs ? ['c' => $caracs] : []) + ['page' => $p]);
 };
 $moi = utilisateur_connecte();
 ?>
-<h1>Chercher un objet</h1>
+<h1><?= $categorie ? e($categorie['nom']) . ' à échanger' : 'Chercher un objet' ?></h1>
+
+<?php if ($sousCategories): ?>
+    <!-- Raccourcis : on affine d'un clic -->
+    <nav class="puces-categories" aria-label="Sous-catégories">
+        <?php foreach ($sousCategories as $sc): ?>
+            <a href="<?= url('objet/recherche', array_filter(['categorie' => $sc['id'], 'departement' => $filtres['departement'], 'q' => $filtres['q']])) ?>" class="puce">
+                <?= e($sc['nom']) ?> <span><?= (int) $sc['nombre'] ?></span>
+            </a>
+        <?php endforeach; ?>
+    </nav>
+<?php elseif ($categorie && $categorie['id_parent'] !== null): ?>
+    <p class="petit"><a href="<?= url('objet/recherche', array_filter(['categorie' => $categorie['id_parent'], 'departement' => $filtres['departement'], 'q' => $filtres['q']])) ?>">← Toute la catégorie</a></p>
+<?php endif; ?>
 
 <div class="page-recherche">
     <form method="get" class="carte panneau-filtres">
@@ -21,13 +36,44 @@ $moi = utilisateur_connecte();
         </label>
 
         <label>Catégorie
-            <select name="categorie">
+            <!-- data-envoi-auto : changer de catégorie recharge la page pour afficher ses filtres (taille, pointure…) -->
+            <select name="categorie" data-envoi-auto>
                 <option value="">Toutes</option>
-                <?php foreach ($categories as $c): ?>
-                    <option value="<?= $c['id'] ?>" <?= $filtres['categorie'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['nom']) ?></option>
+                <?php foreach ($arbre as $p): ?>
+                    <?php if ($p['enfants']): ?>
+                        <optgroup label="<?= e($p['nom']) ?>">
+                            <option value="<?= $p['id'] ?>" <?= $filtres['categorie'] === (int) $p['id'] ? 'selected' : '' ?>>Tout « <?= e($p['nom']) ?> »</option>
+                            <?php foreach ($p['enfants'] as $c): ?>
+                                <option value="<?= $c['id'] ?>" <?= $filtres['categorie'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['nom']) ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php else: ?>
+                        <option value="<?= $p['id'] ?>" <?= $filtres['categorie'] === (int) $p['id'] ? 'selected' : '' ?>><?= e($p['nom']) ?></option>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </select>
         </label>
+
+        <?php if ($caracteristiques): ?>
+            <fieldset class="filtres-categorie">
+                <legend>Filtres <?= e($categorie['nom']) ?></legend>
+                <?php foreach ($caracteristiques as $id => $c):
+                    $choix = $filtres['caracs'][$id]['valeur'] ?? ''; ?>
+                    <label><?= e($c['nom']) ?>
+                        <?php if ($c['type'] === 'liste'): ?>
+                            <select name="c[<?= $id ?>]">
+                                <option value="">Tous</option>
+                                <?php foreach ($c['options'] as $idOption => $libelle): ?>
+                                    <option value="<?= $idOption ?>" <?= $choix === $idOption ? 'selected' : '' ?>><?= e($libelle) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php else: ?>
+                            <input type="search" name="c[<?= $id ?>]" maxlength="<?= Caracteristique::LONGUEUR_TEXTE ?>" value="<?= e((string) $choix) ?>" placeholder="ex : Nike">
+                        <?php endif; ?>
+                    </label>
+                <?php endforeach; ?>
+            </fieldset>
+        <?php endif; ?>
 
         <label>Département
             <select name="departement">
@@ -76,7 +122,8 @@ $moi = utilisateur_connecte();
         </p>
 
         <?php if (!$objets): ?>
-            <p class="vide">Aucun objet ne correspond. Essaie d'élargir ta recherche (autre département, moins de filtres).</p>
+            <p class="vide">Aucun objet ne correspond. Essaie d'élargir ta recherche (autre département, moins de filtres).
+                <?php if (!empty($filtres['caracs'])): ?><br><span class="petit">Astuce : certaines annonces n'indiquent pas toutes les précisions (marque, couleur…). Retire un filtre pour les voir.</span><?php endif; ?></p>
         <?php else: ?>
             <div class="grille"><?php foreach ($objets as $o) require __DIR__ . '/_carte.php'; ?></div>
         <?php endif; ?>

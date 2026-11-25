@@ -24,6 +24,25 @@
         champ.addEventListener('input', maj);
     });
 
+    // Formulaire d'annonce : n'affiche que les précisions (taille, pointure…) de la catégorie choisie.
+    // Un champ caché est aussi désactivé : il n'est pas envoyé et ne bloque pas l'envoi s'il est obligatoire.
+    const pilote = document.querySelector('[data-pilote-caracs]');
+    const blocCaracs = document.getElementById('caracteristiques');
+    if (pilote && blocCaracs) {
+        const majCaracs = function () {
+            let visibles = 0;
+            blocCaracs.querySelectorAll('[data-categories]').forEach(function (champ) {
+                const concerne = pilote.value !== '' && champ.dataset.categories.split(',').includes(pilote.value);
+                champ.hidden = !concerne;
+                champ.querySelectorAll('select, input').forEach(function (el) { el.disabled = !concerne; });
+                if (concerne) visibles++;
+            });
+            blocCaracs.hidden = visibles === 0;
+        };
+        pilote.addEventListener('change', majCaracs);
+        majCaracs();
+    }
+
     // Galerie photo d'une annonce : cliquer sur une miniature l'affiche en grand
     document.querySelectorAll('.miniature-bouton').forEach(function (bouton) {
         bouton.addEventListener('click', function () {

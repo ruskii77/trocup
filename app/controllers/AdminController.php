@@ -79,6 +79,122 @@ class AdminController extends Controller
         $this->rediriger('admin/index');
     }
 
+    // 🗂️ Catégories et filtres : la page affiche tout, les formulaires envoient une « action »
+    public function categories(): void
+    {
+        $this->exigerAdmin();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            csrf_verifier();
+            try {
+                flash('succes', $this->actionCategories($_POST['action'] ?? ''));
+            } catch (InvalidArgumentException $ex) {
+                flash('erreur', $ex->getMessage());
+            }
+            $this->rediriger('admin/categories');
+        }
+        $this->afficher('admin/categories', [
+            'arbre' => Categorie::arbre(),
+            'caracteristiques' => Caracteristique::toutes(),
+        ], 'Catégories et filtres');
+    }
+
+    // Exécute une action du formulaire. Renvoie le message de succès, ou lance une InvalidArgumentException.
+    private function actionCategories(string $action): string
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $nom = trim($_POST['nom'] ?? '');
+        $nomValide = function (string $nom): string {
+            if ($nom === '' || mb_strlen($nom) > 50) {
+                throw new InvalidArgumentException('Le nom est obligatoire (50 caractères maximum).');
+            }
+            return $nom;
+        };
+        // Les catégories cochées pour un filtre : seulement des catégories qui existent
+        $categoriesCochees = function (): array {
+            $ids = array_map('intval', (array) ($_POST['categories'] ?? []));
+            return array_values(array_filter($ids, fn($i) => Categorie::existe($i)));
+        };
+
+        switch ($action) {
+            case 'ajouter_sous':
+                $parent = Categorie::trouver((int) ($_POST['id_parent'] ?? 0));
+                if (!$parent || $parent['id_parent'] !== null) {
+                    throw new InvalidArgumentException('Catégorie principale introuvable.');
+                }
+                try {
+                    Categorie::creerSousCategorie($nomValide($nom), $parent['id']);
+                } catch (PDOException $ex) {
+                    throw new InvalidArgumentException('Une catégorie porte déjà ce nom.');
+                }
+                return "Sous-catégorie « $nom » ajoutée dans {$parent['nom']}.";
+
+            case 'renommer':
+                $c = Categorie::trouver($id);
+                if (!$c || $c['id_parent'] === null) {
+                    throw new InvalidArgumentException('Seules les sous-catégories se renomment ici.');
+                }
+                try {
+                    Categorie::renommer($id, $nomValide($nom));
+                } catch (PDOException $ex) {
+                    throw new InvalidArgumentException('Une catégorie porte déjà ce nom.');
+                }
+                return 'Catégorie renommée.';
+
+            case 'supprimer_sous':
+                $c = Categorie::trouver($id);
+                if (!$c || $c['id_parent'] === null) {
+                    throw new InvalidArgumentException('Seules les sous-catégories peuvent être supprimées.');
+                }
+                $nb = Categorie::nombreObjets($id);
+                Categorie::supprimerSousCategorie($id);
+                return "« {$c['nom']} » supprimée" . ($nb ? " ($nb annonce(s) déplacée(s) dans la catégorie principale)." : '.');
+
+            case 'ajouter_carac':
+                $type = ($_POST['type'] ?? '') === 'texte' ? 'texte' : 'liste';
+                $nomValide($nom);
+                if (Caracteristique::nomExiste($nom)) {
+                    throw new InvalidArgumentException('Un filtre porte déjà ce nom.');
+                }
+                // Une option par ligne, ou séparées par des virgules
+                $options = array_values(array_unique(array_filter(array_map('trim', preg_split('/[,\n]/', $_POST['options'] ?? '')), fn($o) => $o !== '' && mb_strlen($o) <= 50)));
+                if ($type === 'liste' && !$options) {
+                    throw new InvalidArgumentException('Un filtre « liste » a besoin d\'au moins un choix (ex : S, M, L).');
+                }
+                $categories = $categoriesCochees();
+                if (!$categories) {
+                    throw new InvalidArgumentException('Coche au moins une catégorie.');
+                }
+                Caracteristique::creer($nom, $type, !empty($_POST['obligatoire']), $type === 'liste' ? $options : [], $categories);
+                return "Filtre « $nom » créé.";
+
+            case 'modifier_carac':
+                $categories = $categoriesCochees();
+                if (!$categories) {
+                    throw new InvalidArgumentException('Coche au moins une catégorie (ou supprime le filtre).');
+                }
+                Caracteristique::changerCategories($id, $categories);
+                Caracteristique::changerObligatoire($id, !empty($_POST['obligatoire']));
+                return 'Filtre mis à jour.';
+
+            case 'ajouter_option':
+                $valeur = trim($_POST['valeur'] ?? '');
+                if ($valeur === '' || mb_strlen($valeur) > 50) {
+                    throw new InvalidArgumentException('Le choix est obligatoire (50 caractères maximum).');
+                }
+                Caracteristique::ajouterOption($id, $valeur);
+                return "Choix « $valeur » ajouté.";
+
+            case 'supprimer_option':
+                Caracteristique::supprimerOption((int) ($_POST['id_option'] ?? 0));
+                return 'Choix supprimé.';
+
+            case 'supprimer_carac':
+                Caracteristique::supprimer($id);
+                return 'Filtre supprimé.';
+        }
+        throw new InvalidArgumentException('Action inconnue.');
+    }
+
     private function changerBannissement(bool $banni, string $message): void
     {
         $this->exigerPost();

@@ -47,6 +47,16 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
 
+## Catégories et filtres (V1.8)
+
+- **Sous-catégories** : Vêtements › T-shirts, Chaussures… Chercher dans « Vêtements » montre aussi toutes ses sous-catégories.
+- **Filtres par catégorie** (Taille, Pointure, Plateforme, Couleur, Marque…) : demandés à la publication, proposés dans la recherche
+  seulement pour la catégorie choisie. Un filtre rattaché à une catégorie principale vaut pour toutes ses sous-catégories.
+- **Tout se gère depuis l'admin** (Admin → 🗂️ Catégories et filtres), sans toucher au code.
+- Modèle de données (migration `006`) : `categorie(#id_parent)`, `caracteristique`, `caracteristique_option`,
+  `categorie_caracteristique` (quelle catégorie a quel filtre), `objet_caracteristique` (la valeur choisie par une annonce).
+- Page **« Le concept »** (`page/concept`) : le principe, l'histoire du trombone rouge, les règles, la sécurité, une FAQ.
+
 ## Sécurité et conformité (V1.7)
 
 - **En-têtes de sécurité** envoyés par `app/core/Securite.php` : Content-Security-Policy (aucun script extérieur ni intégré

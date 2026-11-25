@@ -40,6 +40,12 @@ class ObjetController extends Controller
             'valeur_max'  => is_numeric($_GET['valeur_max'] ?? '') ? (float) $_GET['valeur_max'] : null,
             'tri'         => isset(Objet::TRIS[$_GET['tri'] ?? '']) ? $_GET['tri'] : 'recent',
         ];
+        $categorie = $filtres['categorie'] ? Categorie::trouver($filtres['categorie']) : null;
+        if (!$categorie) {
+            $filtres['categorie'] = null;
+        }
+        // Filtres propres à la catégorie choisie (Taille, Pointure…)
+        $filtres['caracs'] = Caracteristique::filtresRecherche($filtres['categorie'], $_GET['c'] ?? []);
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $resultat = Objet::rechercher($filtres, $page);
 
@@ -56,8 +62,12 @@ class ObjetController extends Controller
             'total'      => $resultat['total'],
             'page'       => $page,
             'nbPages'    => $nbPages,
-            'categories' => Categorie::toutes(),
-        ], 'Chercher un objet');
+            'arbre'      => Categorie::arbre(),
+            'categorie'  => $categorie,
+            // Raccourcis vers les sous-catégories quand une catégorie principale est choisie
+            'sousCategories' => ($categorie && $categorie['id_parent'] === null) ? Categorie::enfantsAvecNombre($categorie['id']) : [],
+            'caracteristiques' => Caracteristique::pourCategorie($filtres['categorie']),
+        ], $categorie ? $categorie['nom'] . ' à échanger' : 'Chercher un objet');
     }
 
     public function voir(): void
@@ -75,6 +85,7 @@ class ObjetController extends Controller
         $this->afficher('objets/voir', [
             'objet'        => $objet,
             'photosSup'    => Objet::photosSup($objet['id']),
+            'caracteristiques' => Caracteristique::affichageObjet($objet['id']),
             'estFavori'    => $u ? Favori::estFavori($u['id'], $objet['id']) : false,
             'nbFavoris'    => Favori::nombrePour($objet['id']),
             // Suggestions : mes objets dont la valeur est proche de celui-ci
@@ -93,7 +104,7 @@ class ObjetController extends Controller
     {
         $u = $this->exigerConnexion();
         $erreurs = [];
-        $valeurs = ['titre' => '', 'description' => '', 'etat' => 'bon', 'valeur_estimee' => '', 'id_categorie' => ''];
+        $valeurs = ['titre' => '', 'description' => '', 'etat' => 'bon', 'valeur_estimee' => '', 'id_categorie' => '', 'c' => []];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             csrf_verifier();
@@ -113,6 +124,7 @@ class ObjetController extends Controller
 
             if (!$erreurs) {
                 $id = Objet::creer($valeurs + ['photo' => $photo, 'id_utilisateur' => $u['id']]);
+                Caracteristique::enregistrer($id, $valeurs['c']);
                 $this->enregistrerPhotosSup($id, 0);
                 flash('succes', 'Ton objet est en ligne !');
                 $this->rediriger('objet/voir', ['id' => $id]);
@@ -121,7 +133,8 @@ class ObjetController extends Controller
 
         $this->afficher('objets/formulaire', [
             'valeurs' => $valeurs, 'erreurs' => $erreurs,
-            'categories' => Categorie::toutes(), 'modification' => false, 'photosSup' => [],
+            'arbre' => Categorie::arbre(), 'caracteristiques' => Caracteristique::toutes(),
+            'modification' => false, 'photosSup' => [],
         ], 'Publier un objet');
     }
 
@@ -134,7 +147,7 @@ class ObjetController extends Controller
         }
 
         $erreurs = [];
-        $valeurs = $objet;
+        $valeurs = $objet + ['c' => Caracteristique::valeursObjet($objet['id'])];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             csrf_verifier();
@@ -154,6 +167,7 @@ class ObjetController extends Controller
                     Image::supprimer($objet['photo']); // l'ancienne photo ne sert plus
                 }
                 Objet::modifier($objet['id'], $valeurs + ['photo' => $photo]);
+                Caracteristique::enregistrer($objet['id'], $valeurs['c']);
                 foreach ((array) ($_POST['supprimer_photos'] ?? []) as $idPhoto) {
                     Objet::supprimerPhotoSup((int) $idPhoto, $objet['id']);
                 }
@@ -166,7 +180,8 @@ class ObjetController extends Controller
 
         $this->afficher('objets/formulaire', [
             'valeurs' => $valeurs, 'erreurs' => $erreurs,
-            'categories' => Categorie::toutes(), 'modification' => true, 'photosSup' => Objet::photosSup($objet['id']),
+            'arbre' => Categorie::arbre(), 'caracteristiques' => Caracteristique::toutes(),
+            'modification' => true, 'photosSup' => Objet::photosSup($objet['id']),
         ], 'Modifier un objet');
     }
 
@@ -281,7 +296,14 @@ class ObjetController extends Controller
         if (!is_numeric($v['valeur_estimee']) || $v['valeur_estimee'] < 0 || $v['valeur_estimee'] > 1000000) {
             $erreurs[] = 'La valeur estimée doit être un nombre positif.';
         }
-        if (!Categorie::existe($v['id_categorie']))              $erreurs[] = 'Choisis une catégorie.';
+        if (!Categorie::existe($v['id_categorie'])) {
+            $erreurs[] = 'Choisis une catégorie.';
+            $v['c'] = [];
+        } else {
+            // Taille, pointure, plateforme… selon la catégorie choisie
+            [$v['c'], $erreursCaracs] = Caracteristique::valider($v['id_categorie'], $_POST['c'] ?? []);
+            $erreurs = array_merge($erreurs, $erreursCaracs);
+        }
 
         $v['valeur_estimee'] = (float) $v['valeur_estimee'];
         return [$v, $erreurs];

@@ -45,6 +45,7 @@
                     <button type="submit" class="lien-bouton">Déconnexion</button>
                 </form>
             <?php else: ?>
+                <a href="<?= url('page/concept') ?>">💡 Le concept</a>
                 <a href="<?= url('utilisateur/connexion') ?>">Connexion</a>
                 <a href="<?= url('utilisateur/inscription') ?>" class="bouton bouton-petit">S'inscrire</a>
             <?php endif; ?>

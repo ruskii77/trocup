@@ -13,7 +13,8 @@
             <strong>Explorer</strong>
             <a href="<?= url('objet/recherche') ?>">Chercher un objet</a>
             <a href="<?= url('objet/creer') ?>">Publier un objet</a>
-            <a href="<?= url('accueil') ?>#comment">Comment ça marche</a>
+            <a href="<?= url('page/concept') ?>">Le concept, comment ça marche</a>
+            <a href="<?= url('page/concept') ?>#valeur">Estimer la valeur d'un objet</a>
         </div>
         <div>
             <strong>Sécurité</strong>

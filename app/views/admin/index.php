@@ -1,5 +1,6 @@
 <h1>🛠️ Administration</h1>
 <div class="actions">
+    <a href="<?= url('admin/categories') ?>" class="bouton bouton-secondaire bouton-petit">🗂️ Catégories et filtres</a>
     <a href="<?= url('maj/index') ?>" class="bouton bouton-secondaire bouton-petit">🗄️ Mise à jour de la base</a>
     <form method="post" action="<?= url('admin/nettoyer') ?>">
         <?= csrf_champ() ?>
