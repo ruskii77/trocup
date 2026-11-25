@@ -388,6 +388,10 @@ class UtilisateurController extends Controller
 
     private function ouvrirSession(array $u): void
     {
+        // (pas pendant une mise à jour de la base : la colonne n'existe peut-être pas encore)
+        if (!Controller::$majEnAttente) {
+            Database::get()->prepare('UPDATE utilisateur SET derniere_connexion = NOW() WHERE id = ?')->execute([$u['id']]);
+        }
         session_regenerate_id(true); // nouvel identifiant de session à la connexion (sécurité)
         $_SESSION['utilisateur'] = [
             'id' => (int) $u['id'], 'pseudo' => $u['pseudo'], 'role' => $u['role'],

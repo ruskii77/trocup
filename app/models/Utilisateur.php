@@ -168,8 +168,16 @@ class Utilisateur
     // Règles du mot de passe : renvoie un message d'erreur, ou null si le mot de passe est correct
     public static function erreurMotDePasse(string $mdp, string $confirmation): ?string
     {
-        if (strlen($mdp) < 8 || !preg_match('/[A-Za-z]/', $mdp) || !preg_match('/\d/', $mdp)) {
-            return 'Le mot de passe doit faire au moins 8 caractères, avec au moins une lettre et un chiffre.';
+        // Recommandation CNIL (2022) quand les tentatives de connexion sont limitées, ce qui est le cas ici :
+        // au moins 8 caractères mélangeant 3 types parmi minuscules, majuscules, chiffres et caractères spéciaux.
+        // On accepte aussi les « phrases de passe » longues (16 caractères ou plus), faciles à retenir et robustes.
+        $types = preg_match('/[a-z]/', $mdp) + preg_match('/[A-Z]/', $mdp) + preg_match('/\d/', $mdp) + preg_match('/[^a-zA-Z\d]/', $mdp);
+        $longueur = mb_strlen($mdp);
+        if ($longueur > 72) {
+            return 'Le mot de passe ne doit pas dépasser 72 caractères.'; // limite technique de l'algorithme bcrypt
+        }
+        if (!($longueur >= 16 || ($longueur >= 8 && $types >= 3))) {
+            return 'Mot de passe trop faible : au moins 8 caractères avec 3 types parmi minuscules, majuscules, chiffres et symboles (ou une phrase de 16 caractères ou plus).';
         }
         if ($mdp !== $confirmation) {
             return 'Les deux mots de passe ne correspondent pas.';

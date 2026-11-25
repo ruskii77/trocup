@@ -3,3 +3,5 @@ public/uploads/*
 storage/emails/*
 !storage/emails/.gitkeep
 config/config.local.php
+.DS_Store
+storage/derniere_maintenance.txt

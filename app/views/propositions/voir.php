@@ -19,7 +19,7 @@
 <?php if ($p['statut'] === 'en_attente'): ?>
     <div class="actions centre">
         <?php if ($estDestinataire): ?>
-            <form method="post" action="<?= url('proposition/accepter') ?>" onsubmit="return confirm('Accepter cet échange ? Les objets changeront de propriétaire.');">
+            <form method="post" action="<?= url('proposition/accepter') ?>" data-confirmer="Accepter cet échange ? Les objets changeront de propriétaire.">
                 <?= csrf_champ() ?><input type="hidden" name="id" value="<?= $p['id'] ?>">
                 <button type="submit" class="bouton">✅ Accepter</button>
             </form>

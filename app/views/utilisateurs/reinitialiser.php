@@ -5,7 +5,7 @@
         <?= csrf_champ() ?>
         <input type="hidden" name="jeton" value="<?= e($jeton) ?>">
         <label>Nouveau mot de passe <input type="password" name="mot_de_passe" required minlength="8">
-            <span class="aide">8 caractères minimum, avec au moins une lettre et un chiffre.</span></label>
+            <span class="aide">8 caractères minimum avec 3 types parmi : minuscules, majuscules, chiffres, symboles. Ou une phrase de 16 caractères ou plus.</span></label>
         <label>Confirme le mot de passe <input type="password" name="mot_de_passe_confirmation" required minlength="8"></label>
         <button type="submit" class="bouton bouton-grand">Enregistrer</button>
     </form>

@@ -26,11 +26,15 @@
         · <a href="<?= url('page/mentions') ?>">Mentions légales</a>
         · <a href="<?= url('page/confidentialite') ?>">Confidentialité</a>
         · <a href="<?= url('page/cgu') ?>">Conditions d'utilisation</a>
+        · <a href="<?= url('page/confidentialite') ?>#cookies" data-ouvrir-cookies>Gérer mes cookies</a>
         <?php if (MODE_DEV && MAIL_MODE === 'fichier'): ?>
             · 🛠️ Mode développement · <a href="<?= url('dev/emails') ?>">📬 Boîte mail de test</a>
         <?php endif; ?>
     </div>
 </footer>
+<?php require __DIR__ . '/_cookies.php'; ?>
+<script src="js/site.js"></script>
+<script src="js/cookies.js"></script>
 <?php if (utilisateur_connecte()): ?>
     <script src="js/notifications.js"></script>
 <?php endif; ?>

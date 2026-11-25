@@ -6,5 +6,5 @@
 -- =====================================================
 USE echange_vers_le_haut;
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS migration, limite_action, notif_email, blocage, signalement_membre, favori, photo_objet, lecture, tentative_connexion, jeton, signalement, avis, message, proposition, objet, categorie, utilisateur;
+DROP TABLE IF EXISTS migration, consentement_cookie, limite_action, notif_email, blocage, signalement_membre, favori, photo_objet, lecture, tentative_connexion, jeton, signalement, avis, message, proposition, objet, categorie, utilisateur;
 SET FOREIGN_KEY_CHECKS = 1;

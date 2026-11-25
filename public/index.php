@@ -4,18 +4,20 @@
 //  Toutes les pages passent par ici : index.php?route=controleur/action
 // =====================================================
 
-// Cookie de session plus sûr : inaccessible au JavaScript (httponly) et pas envoyé par d'autres sites (samesite)
-session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax', 'secure' => !empty($_SERVER['HTTPS'])]);
-session_start();
-
 require __DIR__ . '/../config/config.php';
 require __DIR__ . '/../app/core/helpers.php';
+require __DIR__ . '/../app/core/Securite.php';
+
+// Erreurs masquées en production, en-têtes de sécurité, session sécurisée (voir app/core/Securite.php)
+Securite::demarrer();
+
 require __DIR__ . '/../app/core/departements.php';
 require __DIR__ . '/../app/core/Mailer.php';
 require __DIR__ . '/../app/core/Database.php';
 require __DIR__ . '/../app/core/Controller.php';
 require __DIR__ . '/../app/core/Migrations.php';
 require __DIR__ . '/../app/core/Image.php';
+require __DIR__ . '/../app/core/Cookies.php';
 
 // Chargement automatique des classes : "ObjetController" → app/controllers/ObjetController.php
 spl_autoload_register(function (string $classe) {
@@ -75,6 +77,8 @@ $routes = [
     'utilisateur/supprimerCompte' => ['UtilisateurController', 'supprimerCompte'],
     'notification/compte'    => ['NotificationController', 'compte'],
     'maj/index'              => ['MajController', 'index'],
+    'cookies/journal'        => ['CookiesController', 'journal'],
+    'admin/nettoyer'         => ['AdminController', 'nettoyer'],
 ];
 
 try {
@@ -113,11 +117,18 @@ try {
         }
     }
 
+    // Nettoyage RGPD automatique (au plus une fois par jour)
+    if (!$enAttente) {
+        Maintenance::siNecessaire();
+    }
+
     [$classe, $methode] = $routes[$route] ?? $routes['accueil'];
     (new $classe())->$methode();
 
 } catch (PDOException $e) {
     http_response_code(500);
     error_log($e->getMessage()); // le détail va dans les logs, jamais à l'écran
-    echo '<h1>Erreur de base de données</h1><p>Vérifie que MySQL est démarré et que config/config.php est correct.</p>';
+    echo MODE_DEV
+        ? '<h1>Erreur de base de données</h1><p>' . e($e->getMessage()) . '</p><p>Vérifie que MySQL est démarré et config/config.local.php.</p>'
+        : '<h1>Oups…</h1><p>Le site rencontre un problème technique. Réessaie dans quelques minutes.</p>';
 }

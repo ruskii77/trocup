@@ -23,9 +23,14 @@
        les objets et ne garantit ni leur état, ni leur valeur, ni le bon déroulement de l'échange.
        Conseils : rencontrez-vous dans un lieu public, vérifiez l'objet avant d'échanger, ne communiquez jamais vos coordonnées bancaires.</p>
 
-    <h2>5. Modération</h2>
-    <p>Tout membre peut signaler une annonce ou un membre. L'administrateur peut retirer un contenu ou suspendre un compte
-       qui ne respecte pas ces conditions, sans préavis.</p>
+    <h2>5. Signalements et modération</h2>
+    <p>Tout membre peut signaler une annonce ou un membre avec les boutons « Signaler » ; toute personne peut aussi
+       écrire à <?= e(EDITEUR_EMAIL) ?>. Les signalements sont examinés par l'administrateur du site (un humain, pas un algorithme).</p>
+    <p>L'administrateur peut retirer une annonce ou suspendre un compte qui ne respecte pas ces conditions.
+       Dans ce cas, le membre concerné est <strong>prévenu par email</strong> avec le motif de la décision,
+       et peut la <strong>contester</strong> en répondant à <?= e(EDITEUR_EMAIL) ?> ; sa demande sera réexaminée.</p>
+    <p>Les annonces sont affichées par date de publication (ou selon le tri choisi par le visiteur : valeur, département, catégorie).
+       Aucune annonce n'est mise en avant contre rémunération.</p>
 
     <h2>6. Responsabilité</h2>
     <p>Le site est fourni « en l'état », gratuitement. L'éditeur fait de son mieux pour qu'il fonctionne correctement,

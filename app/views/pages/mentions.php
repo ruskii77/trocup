@@ -15,6 +15,11 @@
        <?= e(NOM_SITE) ?> agit en tant qu'hébergeur de ces contenus : tout contenu manifestement illicite peut être signalé
        grâce au bouton « Signaler » ou à l'adresse <?= e(EDITEUR_EMAIL) ?>, et sera retiré dans les meilleurs délais.</p>
 
+    <h2>Points de contact (règlement européen sur les services numériques — DSA)</h2>
+    <p>Pour les membres, les autorités et toute personne souhaitant signaler un contenu illicite :
+       <strong><?= e(EDITEUR_EMAIL) ?></strong> (réponse en français ou en anglais).
+       Les annonces et les membres peuvent aussi être signalés directement grâce aux boutons « Signaler » du site.</p>
+
     <h2>Propriété intellectuelle</h2>
     <p>Le nom <?= e(NOM_SITE) ?>, le logo et la présentation du site sont la propriété de l'éditeur.
        Les membres restent propriétaires des photos et textes qu'ils publient.</p>

@@ -1,5 +1,14 @@
 <h1>🛠️ Administration</h1>
-<p><a href="<?= url('maj/index') ?>">🗄️ Mise à jour de la base de données</a></p>
+<div class="actions">
+    <a href="<?= url('maj/index') ?>" class="bouton bouton-secondaire bouton-petit">🗄️ Mise à jour de la base</a>
+    <form method="post" action="<?= url('admin/nettoyer') ?>">
+        <?= csrf_champ() ?>
+        <button class="bouton bouton-secondaire bouton-petit">🧹 Nettoyage RGPD maintenant</button>
+    </form>
+    <span class="petit">Nettoyage automatique quotidien · dernier passage :
+        <?= $derniereMaintenance ? date('d/m/Y à H:i', $derniereMaintenance) : 'jamais' ?></span>
+</div>
+<p class="petit">ℹ️ Quand tu retires une annonce ou bannis un membre, il reçoit un email avec le motif choisi et la possibilité de contester (obligation du règlement européen DSA).</p>
 
 <h2>🚩 Signalements en attente (<?= count($signalements) ?>)</h2>
 <?php if (!$signalements): ?>
@@ -21,6 +30,9 @@
                 <td class="actions-admin">
                     <form method="post" action="<?= url('admin/retirerObjet') ?>">
                         <?= csrf_champ() ?><input type="hidden" name="id_objet" value="<?= $s['id_objet'] ?>">
+                        <select name="motif" class="motif-select" aria-label="Motif">
+                            <?php foreach (AdminController::MOTIFS as $m): ?><option><?= e($m) ?></option><?php endforeach; ?>
+                        </select>
                         <button class="bouton bouton-danger bouton-petit">Retirer l'annonce</button>
                     </form>
                     <form method="post" action="<?= url('admin/ignorer') ?>">
@@ -28,8 +40,11 @@
                         <button class="bouton bouton-secondaire bouton-petit">Classer sans suite</button>
                     </form>
                     <?php if (!$s['est_banni']): ?>
-                        <form method="post" action="<?= url('admin/bannir') ?>" onsubmit="return confirm('Bannir ce compte ?');">
+                        <form method="post" action="<?= url('admin/bannir') ?>" data-confirmer="Bannir ce compte ?">
                             <?= csrf_champ() ?><input type="hidden" name="id_utilisateur" value="<?= $s['id_proprietaire'] ?>">
+                            <select name="motif" class="motif-select" aria-label="Motif">
+                            <?php foreach (AdminController::MOTIFS as $m): ?><option><?= e($m) ?></option><?php endforeach; ?>
+                        </select>
                             <button class="bouton bouton-danger bouton-petit">Bannir le propriétaire</button>
                         </form>
                     <?php endif; ?>
@@ -59,8 +74,11 @@
                         <button class="bouton bouton-secondaire bouton-petit">Classer sans suite</button>
                     </form>
                     <?php if (!$s['est_banni']): ?>
-                        <form method="post" action="<?= url('admin/bannir') ?>" onsubmit="return confirm('Bannir ce membre ?');">
+                        <form method="post" action="<?= url('admin/bannir') ?>" data-confirmer="Bannir ce membre ?">
                             <?= csrf_champ() ?><input type="hidden" name="id_utilisateur" value="<?= $s['id_signale'] ?>">
+                            <select name="motif" class="motif-select" aria-label="Motif">
+                            <?php foreach (AdminController::MOTIFS as $m): ?><option><?= e($m) ?></option><?php endforeach; ?>
+                        </select>
                             <button class="bouton bouton-danger bouton-petit">Bannir</button>
                         </form>
                     <?php endif; ?>

@@ -13,6 +13,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; } /* un élément caché reste caché, même s'il a une classe .bouton */
 
 body {
     margin: 0;
@@ -342,6 +343,27 @@ body { background: linear-gradient(180deg, #f2f8f4 0, var(--fond) 420px); }
 .apercu-partage[hidden] { display: none; }
 .apercu-boite { background: var(--carte); border-radius: 18px; padding: 1rem; max-width: 420px; width: 100%; }
 .apercu-boite img { width: 100%; border-radius: 12px; }
+
+/* ===== V1.7 : bandeau cookies, modération ===== */
+.bandeau-cookies { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 60; display: flex; justify-content: center; }
+.bandeau-cookies[hidden] { display: none; }
+.bandeau-cookies-boite { background: var(--carte); border: 1px solid var(--bordure); border-radius: 18px; padding: 1.2rem 1.4rem;
+    max-width: 760px; width: 100%; box-shadow: 0 12px 40px rgba(16,40,28,.18); max-height: 85vh; overflow-y: auto; }
+.bandeau-cookies h2 { margin: 0 0 .5rem; font-size: 1.15rem; }
+.bandeau-cookies p { margin: .3rem 0; font-size: .92rem; }
+.cookies-boutons { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1rem; }
+.bouton-cookie { flex: 1; min-width: 150px; text-align: center; }  /* Refuser et Accepter : même taille, même couleur */
+.cookies-details { margin-top: .8rem; border-top: 1px solid var(--bordure); padding-top: .6rem; }
+.cookie-categorie { padding: .5rem 0; border-bottom: 1px solid var(--bordure); }
+.interrupteur { display: flex; align-items: center; gap: .6rem; margin: 0; cursor: pointer; }
+.interrupteur input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.interrupteur-curseur { width: 42px; height: 24px; border-radius: 999px; background: #cfd5d2; position: relative; flex-shrink: 0; transition: background .2s; }
+.interrupteur-curseur::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.interrupteur input:checked + .interrupteur-curseur { background: var(--vert); }
+.interrupteur input:checked + .interrupteur-curseur::after { transform: translateX(18px); }
+.interrupteur input:disabled + .interrupteur-curseur { opacity: .6; }
+.interrupteur input:focus-visible + .interrupteur-curseur { outline: 2px solid var(--vert-fonce); outline-offset: 2px; }
+.motif-select { font-size: .8rem; padding: .3rem; margin: 0 0 .3rem; }
 
 /* ----- Pied de page ----- */
 .pied { margin-top: 3rem; padding: 2rem 0 1rem; border-top: 1px solid var(--bordure); background: var(--carte); }

@@ -65,7 +65,7 @@ $connecte = utilisateur_connecte();
                         <?= csrf_champ() ?><input type="hidden" name="id" value="<?= $objet['id'] ?>">
                         <button type="submit" class="bouton bouton-secondaire"><?= $objet['est_reserve'] ? '🔓 Remettre disponible' : '🔒 Marquer réservé' ?></button>
                     </form>
-                    <form method="post" action="<?= url('objet/retirer') ?>" onsubmit="return confirm('Retirer cette annonce ?');">
+                    <form method="post" action="<?= url('objet/retirer') ?>" data-confirmer="Retirer cette annonce ?">
                         <?= csrf_champ() ?>
                         <input type="hidden" name="id" value="<?= $objet['id'] ?>">
                         <button type="submit" class="bouton bouton-danger">Retirer l'annonce</button>
@@ -109,13 +109,3 @@ $connecte = utilisateur_connecte();
     </div>
 </article>
 
-<script>
-// Galerie : cliquer sur une miniature l'affiche en grand
-document.querySelectorAll('.miniature-bouton').forEach(function (bouton) {
-    bouton.addEventListener('click', function () {
-        document.getElementById('photo-principale').src = bouton.dataset.src;
-        document.querySelectorAll('.miniature-bouton').forEach(b => b.classList.remove('active'));
-        bouton.classList.add('active');
-    });
-});
-</script>

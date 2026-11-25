@@ -1,4 +1,4 @@
-# Visota — V1.6
+# Visota — V1.7
 
 > Pars d'un trombone. Vise une voiture.
 
@@ -46,6 +46,25 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 à chaque mise à jour, seuls les **nouveaux** fichiers sont exécutés. Les données restent en place.
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
+
+## Sécurité et conformité (V1.7)
+
+- **En-têtes de sécurité** envoyés par `app/core/Securite.php` : Content-Security-Policy (aucun script extérieur ni intégré
+  dans les pages n'est exécuté), HSTS, nosniff, Permissions-Policy. Tout le JavaScript est dans `public/js/`.
+- **Erreurs masquées en production** (`MODE_DEV = false`) : écrites dans le journal d'erreurs du serveur, jamais affichées.
+- **Session** : cookie `visota_session` HttpOnly + SameSite, déconnexion après 2 h d'inactivité.
+- **Mots de passe** conformes à la recommandation CNIL 2022 (8 caractères et 3 types, ou phrase de 16 caractères ou plus).
+- **Nettoyage RGPD automatique** une fois par jour (`app/models/Maintenance.php`) + bouton dans l'admin.
+- **Modération motivée (DSA)** : un membre dont l'annonce est retirée ou le compte suspendu reçoit un email avec le motif.
+- **Bandeau cookies** conforme CNIL : Tout refuser / Tout accepter au même niveau, Personnaliser, choix gardé 6 mois,
+  lien « Gérer mes cookies » en bas de page. Catégories dans `app/core/Cookies.php`.
+- **Registre des traitements** (document RGPD interne) : `docs/registre-des-traitements.md` à compléter et garder à jour.
+
+### Ajouter un service soumis au consentement (ex. statistiques)
+1. Déclare-le dans `app/core/Cookies.php` (catégorie, nom, utilité, durée) et augmente `VERSION` (tout le monde est re-questionné).
+2. Dans une vue, écris le script ainsi : `<script type="text/plain" data-consentement="mesure" data-src="https://…"></script>`.
+   Il ne sera chargé que si le visiteur a accepté.
+3. Autorise son domaine dans la Content-Security-Policy de `app/core/Securite.php`.
 
 ## Avant la mise en ligne : pages légales
 Les pages Mentions légales, Confidentialité et CGU sont des **modèles**. Renseigne `EDITEUR_NOM`, `EDITEUR_EMAIL`,

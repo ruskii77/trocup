@@ -18,7 +18,7 @@
                 <input type="hidden" name="action" value="avatar">
                 <label class="bouton bouton-secondaire bouton-petit bouton-fichier">
                     📷 <?= $u['avatar'] ? 'Changer la photo' : 'Ajouter une photo' ?>
-                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()">
+                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-envoi-auto>
                 </label>
                 <noscript><button type="submit" class="bouton bouton-petit">Envoyer</button></noscript>
             </form>
@@ -38,7 +38,7 @@
 
             <label>Bio
                 <textarea name="bio" rows="3" maxlength="300" placeholder="Qui es-tu ? Ce que tu aimes échanger, ton objectif de chaîne…"
-                          oninput="this.nextElementSibling.textContent = this.value.length + ' / 300'"><?= e($u['bio'] ?? '') ?></textarea>
+                          data-compteur="300"><?= e($u['bio'] ?? '') ?></textarea>
                 <span class="aide"><?= mb_strlen($u['bio'] ?? '') ?> / 300</span>
             </label>
 
@@ -92,7 +92,7 @@
         <?= csrf_champ() ?>
         <input type="hidden" name="action" value="notifs">
         <label class="case">
-            <input type="checkbox" name="notif_email" value="1" <?= $u['notif_email'] ? 'checked' : '' ?> onchange="this.form.submit()">
+            <input type="checkbox" name="notif_email" value="1" <?= $u['notif_email'] ? 'checked' : '' ?> data-envoi-auto>
             <span>M'envoyer un email quand je reçois une proposition ou un message (au plus un email par échange tant que je ne l'ai pas lu)</span>
         </label>
         <noscript><button class="bouton bouton-petit">Enregistrer</button></noscript>
@@ -108,7 +108,7 @@
     <details class="zone-danger">
         <summary>Supprimer mon compte</summary>
         <p>Tes informations personnelles seront effacées et tes annonces retirées. <strong>C'est définitif.</strong></p>
-        <form method="post" action="<?= url('utilisateur/supprimerCompte') ?>" onsubmit="return confirm('Supprimer définitivement ton compte ?');">
+        <form method="post" action="<?= url('utilisateur/supprimerCompte') ?>" data-confirmer="Supprimer définitivement ton compte ?">
             <?= csrf_champ() ?>
             <label>Tape <strong>SUPPRIMER</strong> pour confirmer <input type="text" name="confirmation" required autocomplete="off"></label>
             <label>Ton mot de passe <input type="password" name="mot_de_passe" required></label>

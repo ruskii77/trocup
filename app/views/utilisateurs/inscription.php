@@ -15,7 +15,7 @@
             <label>Ville <input type="text" name="ville" required value="<?= e($valeurs['ville']) ?>" placeholder="Montpellier"></label>
         </div>
         <label>Mot de passe <input type="password" name="mot_de_passe" required minlength="8">
-            <span class="aide">8 caractères minimum, avec au moins une lettre et un chiffre.</span></label>
+            <span class="aide">8 caractères minimum avec 3 types parmi : minuscules, majuscules, chiffres, symboles. Ou une phrase de 16 caractères ou plus.</span></label>
         <label>Confirme le mot de passe <input type="password" name="mot_de_passe_confirmation" required minlength="8"></label>
 
         <!-- Piège à robots : invisible pour les humains, les robots le remplissent -->
