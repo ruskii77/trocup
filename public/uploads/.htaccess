@@ -1,0 +1,7 @@
+# Interdit l'exécution de scripts dans le dossier des photos (sécurité)
+<FilesMatch "\.(php|phtml|phar|pl|py|cgi|sh)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

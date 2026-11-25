@@ -1,0 +1,5 @@
+public/uploads/*
+!public/uploads/.htaccess
+storage/emails/*
+!storage/emails/.gitkeep
+config/config.local.php

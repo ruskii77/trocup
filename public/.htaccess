@@ -1,0 +1,26 @@
+# ===== Optimisations (ignorées sans risque si le module Apache n'est pas actif) =====
+
+# Compression gzip du HTML, CSS, JS, SVG : 3 à 5× moins de données à télécharger
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript image/svg+xml application/json
+</IfModule>
+
+# Cache navigateur : les images, le CSS et le JS ne sont pas retéléchargés à chaque page
+# (le CSS est appelé avec ?v=date-de-modification, donc une nouvelle version est quand même prise)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType text/javascript "access plus 1 week"
+</IfModule>
+
+# Sécurité : le navigateur ne doit pas « deviner » le type d'un fichier, et le site ne peut pas être mis dans une iframe
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
