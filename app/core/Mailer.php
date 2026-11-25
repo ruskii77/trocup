@@ -71,7 +71,7 @@ class Mailer
               . '<p style="font-size:12px;color:#6b7370">Si le bouton ne marche pas, copie ce lien dans ton navigateur :<br>' . e($lien) . '</p>'
             : '';
         return '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1d2321">'
-             . '<h2 style="font-size:26px;margin-bottom:0">Troc<span style="color:#ff8a3d">Up</span></h2>'
+             . '<h2 style="font-size:26px;margin-bottom:0">' . str_replace('<span>', '<span style="color:#ff8a3d">', logo_texte()) . '</h2>'
              . '<h3>' . e($titre) . '</h3>'
              . '<p>' . nl2br(e($texte)) . '</p>' . $bouton
              . '<p style="font-size:12px;color:#6b7370">Si tu n\'es pas à l\'origine de cette demande, ignore cet email.</p></div>';

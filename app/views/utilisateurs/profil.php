@@ -66,7 +66,8 @@ $connecte = utilisateur_connecte();
         }
         ?>
         <button type="button" class="bouton bouton-petit" id="partager-chaine"
-                data-pseudo="<?= e($profil['pseudo']) ?>" data-site="<?= e(NOM_SITE) ?>"
+                data-pseudo="<?= e($profil['pseudo']) ?>" data-site="<?= e(NOM_SITE) ?>" data-accent="<?= e(NOM_ACCENT) ?>"
+                data-slogan="<?= e(SLOGAN) ?>" data-fichier="ma-chaine-<?= slug_site() ?>.png"
                 data-etapes="<?= e(json_encode($etapes, JSON_UNESCAPED_UNICODE)) ?>">📤 <?= $estMoi ? 'Partager ma chaîne' : 'Partager cette chaîne' ?></button>
     <?php endif; ?>
 </div>
@@ -143,7 +144,7 @@ $connecte = utilisateur_connecte();
         <img id="apercu-image" alt="Image de la chaîne à partager">
         <div class="actions centre">
             <button type="button" class="bouton" id="apercu-partager">📤 Partager</button>
-            <a class="bouton bouton-secondaire" id="apercu-telecharger" download="ma-chaine-trocup.png">⬇️ Télécharger</a>
+            <a class="bouton bouton-secondaire" id="apercu-telecharger" download="ma-chaine-<?= slug_site() ?>.png">⬇️ Télécharger</a>
             <button type="button" class="bouton bouton-secondaire" id="apercu-fermer">Fermer</button>
         </div>
     </div>

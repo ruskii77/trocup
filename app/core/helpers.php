@@ -83,6 +83,22 @@ function photo_objet(?string $photo): string
     return $photo ? 'uploads/' . e($photo) : 'img/pas-de-photo.svg';
 }
 
+// Le nom du site pour le logo, avec la fin en couleur (réglage NOM_ACCENT)
+function logo_texte(): string
+{
+    $nom = NOM_SITE;
+    if (NOM_ACCENT !== '' && str_ends_with($nom, NOM_ACCENT)) {
+        return e(substr($nom, 0, -strlen(NOM_ACCENT))) . '<span>' . e(NOM_ACCENT) . '</span>';
+    }
+    return e($nom);
+}
+
+// Nom du site en minuscules sans accents ni espaces, pour les noms de fichiers : 'Visota' → 'visota'
+function slug_site(): string
+{
+    return strtolower(preg_replace('/[^A-Za-z0-9]+/', '-', iconv('UTF-8', 'ASCII//TRANSLIT', NOM_SITE)));
+}
+
 // Photo de profil ronde, ou à défaut la première lettre du pseudo sur une couleur qui lui est propre
 function avatar(?string $pseudo, ?string $fichier, int $taille = 40): string
 {

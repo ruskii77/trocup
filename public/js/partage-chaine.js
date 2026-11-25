@@ -56,9 +56,14 @@
         // En-tête
         ctx.fillStyle = '#fff';
         ctx.font = `900 64px ${police}`;
-        ctx.fillText('Troc', 80, 130);
-        const lTroc = ctx.measureText('Troc').width;
-        ctx.fillStyle = '#ffb27a'; ctx.fillText('Up', 80 + lTroc, 130);
+        // Le nom du site, avec la fin en orange (comme le logo)
+        const nom = bouton.dataset.site, accent = bouton.dataset.accent || '';
+        const debut = accent && nom.endsWith(accent) ? nom.slice(0, -accent.length) : nom;
+        ctx.fillText(debut, 80, 130);
+        if (debut !== nom) {
+            const l = ctx.measureText(debut).width;
+            ctx.fillStyle = '#ffb27a'; ctx.fillText(accent, 80 + l, 130);
+        }
         ctx.fillStyle = 'rgba(255,255,255,.9)';
         ctx.font = `600 40px ${police}`;
         ctx.fillText('La chaîne d’échanges de @' + bouton.dataset.pseudo, 80, 200);
@@ -100,7 +105,7 @@
 
         ctx.font = `600 34px ${police}`;
         ctx.fillStyle = 'rgba(255,255,255,.92)';
-        ctx.fillText('Pars d’un trombone. Vise une voiture. — ' + bouton.dataset.site, 80, H - 70);
+        ctx.fillText(bouton.dataset.slogan + ' — ' + bouton.dataset.site, 80, H - 70);
         return canvas;
     }
 
@@ -113,7 +118,7 @@
         const url = canvas.toDataURL('image/png');
         document.getElementById('apercu-image').src = url;
         document.getElementById('apercu-telecharger').href = url;
-        fichier = await new Promise(r => canvas.toBlob(b => r(new File([b], 'ma-chaine-trocup.png', { type: 'image/png' }))));
+        fichier = await new Promise(r => canvas.toBlob(b => r(new File([b], bouton.dataset.fichier, { type: 'image/png' }))));
         // Le bouton « Partager » n'apparaît que si le téléphone/navigateur sait partager des fichiers
         document.getElementById('apercu-partager').hidden = !(navigator.canShare && navigator.canShare({ files: [fichier] }));
         apercu.hidden = false;
@@ -121,7 +126,7 @@
     });
 
     document.getElementById('apercu-partager').addEventListener('click', () => {
-        navigator.share({ files: [fichier], title: 'Ma chaîne TrocUp', text: 'Regarde jusqu’où je suis monté sur TrocUp !' }).catch(() => {});
+        navigator.share({ files: [fichier], title: 'Ma chaîne ' + bouton.dataset.site, text: 'Regarde jusqu’où je suis monté sur ' + bouton.dataset.site + ' !' }).catch(() => {});
     });
     document.getElementById('apercu-fermer').addEventListener('click', () => { apercu.hidden = true; });
     apercu.addEventListener('click', e => { if (e.target === apercu) apercu.hidden = true; });

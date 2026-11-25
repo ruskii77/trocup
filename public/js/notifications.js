@@ -9,7 +9,7 @@
     function afficher(total) {
         badge.textContent = total > 99 ? '99+' : total;
         badge.hidden = total === 0;
-        // Le chiffre apparaît aussi dans l'onglet du navigateur : « (2) TrocUp »
+        // Le chiffre apparaît aussi dans l'onglet du navigateur : « (2) Visota »
         document.title = total > 0 ? '(' + total + ') ' + titreOrigine : titreOrigine;
     }
 

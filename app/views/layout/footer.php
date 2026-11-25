@@ -5,7 +5,7 @@
         <div>
             <a href="<?= url('accueil') ?>" class="logo">
                 <img src="img/logo.svg" alt="" width="30" height="30">
-                <span class="logo-texte">Troc<span>Up</span></span>
+                <span class="logo-texte"><?= logo_texte() ?></span>
             </a>
             <p class="petit"><?= e(SLOGAN) ?><br>Le troc entre particuliers, un échange après l'autre.</p>
         </div>

@@ -22,6 +22,6 @@ define('URL_SITE', 'http://localhost:8888/projet-echange/public');
 // --- Pages légales (obligatoire avant la mise en ligne) ---
 // define('EDITEUR_NOM', 'Prénom Nom');
 // define('EDITEUR_VILLE', 'Montpellier');
-// define('EDITEUR_EMAIL', 'contact@trocup.fr');
+// define('EDITEUR_EMAIL', 'contact@visota.fr');
 // define('HEBERGEUR_NOM', 'Nom de l\'hébergeur');
 // define('HEBERGEUR_ADRESSE', 'Adresse et téléphone de l\'hébergeur');

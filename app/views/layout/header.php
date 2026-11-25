@@ -25,7 +25,7 @@
     <div class="conteneur entete-contenu">
         <a href="<?= url('accueil') ?>" class="logo" aria-label="<?= e(NOM_SITE) ?> — accueil">
             <img src="img/logo.svg" alt="" width="36" height="36">
-            <span class="logo-texte">Troc<span>Up</span></span>
+            <span class="logo-texte"><?= logo_texte() ?></span>
         </a>
         <nav class="menu">
             <a href="<?= url('objet/recherche') ?>">🔍 Chercher</a>

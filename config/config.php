@@ -20,7 +20,10 @@ defined('DB_USER') || define('DB_USER', getenv('DB_USER') ?: 'root');
 defined('DB_PASS') || define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'root');
 
 // ---------- Site ----------
-defined('NOM_SITE') || define('NOM_SITE', 'TrocUp');
+// Le nom du site : c'est le SEUL endroit à modifier pour le changer partout (site, emails, images de partage)
+defined('NOM_SITE') || define('NOM_SITE', 'Visota');
+// Partie du nom écrite en orange dans le logo ('' = tout le nom dans la même couleur). Ex. avec 'Visota' : 'ta' → Viso[ta]
+defined('NOM_ACCENT') || define('NOM_ACCENT', 'ta');
 defined('SLOGAN') || define('SLOGAN', 'Pars d\'un trombone. Vise une voiture.');
 
 // Adresse complète du site, utilisée pour les liens dans les emails (sans / à la fin)
