@@ -5,3 +5,4 @@ storage/emails/*
 config/config.local.php
 .DS_Store
 storage/derniere_maintenance.txt
+error_log

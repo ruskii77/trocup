@@ -24,3 +24,8 @@
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
+
+# Sécurité : fichiers techniques jamais accessibles depuis le navigateur (journal d'erreurs PHP, sauvegardes…)
+<FilesMatch "(^error_log|\.(log|sql|md|sh|bak|ini))$">
+    Require all denied
+</FilesMatch>
