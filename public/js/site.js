@@ -24,6 +24,30 @@
         champ.addEventListener('input', maj);
     });
 
+    // Menu téléphone : se ferme quand on touche ailleurs ou qu'on appuie sur Échap ; Entrée/Espace l'ouvre au clavier
+    const bascule = document.getElementById('menu-bascule');
+    if (bascule) {
+        const boutonMenu = document.querySelector('.bouton-menu');
+        const majAria = function () { boutonMenu.setAttribute('aria-expanded', bascule.checked ? 'true' : 'false'); };
+        bascule.addEventListener('change', majAria);
+        majAria();
+        boutonMenu.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bascule.checked = !bascule.checked; majAria(); }
+        });
+        document.addEventListener('click', function (e) {
+            if (bascule.checked && !e.target.closest('.entete')) { bascule.checked = false; majAria(); }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && bascule.checked) { bascule.checked = false; majAria(); boutonMenu.focus(); }
+        });
+    }
+
+    // Sur téléphone, la page Chercher replie ses filtres pour montrer tout de suite les annonces
+    const filtresMobile = document.querySelector('details.filtres-repliables');
+    if (filtresMobile && window.matchMedia('(max-width: 720px)').matches && !filtresMobile.dataset.actifs) {
+        filtresMobile.open = false;
+    }
+
     // Formulaire d'annonce : n'affiche que les précisions (taille, pointure…) de la catégorie choisie.
     // Un champ caché est aussi désactivé : il n'est pas envoyé et ne bloque pas l'envoi s'il est obligatoire.
     const pilote = document.querySelector('[data-pilote-caracs]');

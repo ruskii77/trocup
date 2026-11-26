@@ -79,6 +79,11 @@ function csrf_verifier(): void
 {
     if (!isset($_POST['csrf']) || !hash_equals(csrf_token(), $_POST['csrf'])) {
         http_response_code(400);
+        // Envoi plus gros que la limite de PHP (post_max_size) : PHP jette tout le formulaire, jeton compris
+        if (!$_POST && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            exit('Tes photos sont trop lourdes au total (maximum ' . ini_get('post_max_size') . ' par envoi). '
+                . 'Reviens en arrière et réessaie avec moins de photos ou des photos plus légères.');
+        }
         exit('Formulaire invalide ou expiré. Recharge la page et réessaie.');
     }
 }
@@ -215,4 +220,14 @@ function resume(string $texte, int $longueur = 155): string
     $coupe = mb_substr($texte, 0, $longueur);
     $espace = mb_strrpos($coupe, ' ');
     return rtrim(mb_substr($coupe, 0, $espace ?: $longueur), ' ,.;:') . '…';
+}
+
+// « Vêtements » → « de vêtements » ; « Électronique » → « d'électronique » (titres du type « Troc de vêtements »)
+function de_categorie(string $nom): string
+{
+    if ($nom === 'Autre') {
+        return "d'objets divers";
+    }
+    $minuscule = mb_strtolower(mb_substr($nom, 0, 1)) . mb_substr($nom, 1);
+    return preg_match('/^[aeiouyhéèêàâîôûœ]/iu', $minuscule) ? "d'" . $minuscule : 'de ' . $minuscule;
 }

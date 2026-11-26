@@ -25,8 +25,9 @@ class ObjetController extends Controller
             'nbMembres'    => Utilisateur::compter(),
             'nbEchanges'   => Proposition::nombreAcceptees(),
             'meilleurs'    => $meilleurs,
+            'departementsActifs' => Objet::departementsActifs(12),
             'meta'         => [
-                'description' => 'Troc et échange d\'objets entre particuliers, sans argent : échange un objet contre un peu mieux, puis recommence. Vêtements, jeux vidéo, électronique… Gratuit, près de chez toi.',
+                'description' => 'Site de troc gratuit entre particuliers : échange tes objets près de chez vous, sans argent. Vêtements, jeux vidéo, électronique, meubles… Échange un objet contre un peu mieux, puis recommence.',
                 'robots'      => 'index, follow',
                 'canonical'   => url_absolue('accueil'),
                 'jsonld'      => [[
@@ -44,7 +45,7 @@ class ObjetController extends Controller
                     'logo'     => URL_SITE . '/img/apple-touch-icon.png',
                 ]],
             ],
-        ], 'Troc et échange d\'objets entre particuliers');
+        ], 'Troc entre particuliers près de chez vous : échange d\'objets gratuit');
     }
 
     // Page « Chercher » : tous les filtres + tri + pagination
@@ -86,15 +87,43 @@ class ObjetController extends Controller
             // Raccourcis vers les sous-catégories quand une catégorie principale est choisie
             'sousCategories' => ($categorie && $categorie['id_parent'] === null) ? Categorie::enfantsAvecNombre($categorie['id']) : [],
             'caracteristiques' => Caracteristique::pourCategorie($filtres['categorie']),
-            'meta'       => $this->metaRecherche($filtres, $categorie, $page),
-        ], ($categorie ? $categorie['nom'] . ' à échanger entre particuliers' : 'Chercher un objet à échanger') . ($page > 1 ? ' (page ' . $page . ')' : ''));
+            'villes'     => $filtres['departement'] !== '' ? Objet::villesActives($filtres['departement']) : [],
+            'meta'       => $this->metaRecherche($filtres, $categorie, $page, $resultat['total']),
+        ], $this->titreRecherche($filtres, $categorie) . ($page > 1 ? ' (page ' . $page . ')' : ''));
+    }
+
+    // Titre de l'onglet (et du résultat Google) : il reprend les mots que les gens tapent (« troc », « échange », « près de chez vous »)
+    private function titreRecherche(array $filtres, ?array $categorie): string
+    {
+        if ($categorie) {
+            return 'Troc ' . de_categorie($categorie['nom']) . ' entre particuliers près de chez vous';
+        }
+        if ($filtres['departement'] !== '') {
+            return 'Troc ' . nom_departement($filtres['departement']) . ' (' . $filtres['departement'] . ') : échange d\'objets entre particuliers';
+        }
+        return 'Chercher un objet à échanger : toutes les annonces de troc';
     }
 
     // Référencement de la page Chercher / d'une catégorie.
     // Indexées : la page « Chercher » et chaque catégorie (avec leurs pages 2, 3…).
     // Pas indexées : les combinaisons de filtres (mot-clé, département, taille…), sinon Google verrait des milliers de pages presque identiques.
-    private function metaRecherche(array $filtres, ?array $categorie, int $page): array
+    private function metaRecherche(array $filtres, ?array $categorie, int $page, int $total): array
     {
+        // Exception : un département seul (troc/34-herault) est une vraie page « troc près de chez vous », indexée
+        $seulDepartement = $filtres['departement'] !== '' && !$categorie && $filtres['q'] === '' && $filtres['etat'] === ''
+            && $filtres['valeur_min'] === null && $filtres['valeur_max'] === null && $filtres['tri'] === 'recent';
+        if ($seulDepartement) {
+            $code = $filtres['departement'];
+            $villes = Objet::villesActives($code, 3);
+            return [
+                'description' => resume('Troc et échange d\'objets entre particuliers en ' . nom_departement($code) . ' (' . $code . ') : '
+                    . $total . ' annonce' . ($total > 1 ? 's' : '') . ' près de chez vous' . ($villes ? ' (' . implode(', ', $villes) . '…)' : '')
+                    . '. Vêtements, jeux vidéo, électronique… Gratuit et sans argent.'),
+                'robots'      => $total > 0 ? 'index, follow' : 'noindex, follow',  // page vide : pas d'intérêt pour Google
+                'canonical'   => url_absolue('objet/recherche', ['departement' => $code] + ($page > 1 ? ['page' => $page] : [])),
+                'jsonld'      => [fil_ariane_jsonld([['Troc ' . nom_departement($code), url_absolue('objet/recherche', ['departement' => $code])]])],
+            ];
+        }
         $filtre = $filtres['q'] !== '' || $filtres['departement'] !== '' || $filtres['etat'] !== ''
             || $filtres['valeur_min'] !== null || $filtres['valeur_max'] !== null
             || $filtres['tri'] !== 'recent' || $filtres['caracs'];
@@ -108,7 +137,7 @@ class ObjetController extends Controller
             $etapes[] = [$categorie['nom'], url_absolue('objet/recherche', $base)];
             $jsonld = [fil_ariane_jsonld($etapes)];
         } else {
-            $description = 'Toutes les annonces de troc : cherche par catégorie, taille, état ou département, et propose un échange. Gratuit et sans argent.';
+            $description = 'Toutes les annonces de troc entre particuliers : cherche un objet près de chez vous par catégorie, taille, état ou département, et propose un échange. Gratuit et sans argent.';
             $jsonld = [];
         }
         return [

@@ -153,6 +153,31 @@ class Objet
     // ---------- Photos supplémentaires (jusqu'à 4 en plus de la photo principale) ----------
     public const MAX_PHOTOS_SUP = 4;
 
+    // Départements qui ont des annonces disponibles, du plus actif au moins actif : [['departement' => '34', 'nombre' => 12], …]
+    public static function departementsActifs(int $limite = 100): array
+    {
+        $req = Database::get()->prepare(
+            "SELECT u.departement, COUNT(*) AS nombre, MAX(o.date_publication) AS derniere
+             FROM objet o JOIN utilisateur u ON u.id = o.id_utilisateur
+             WHERE o.statut = 'disponible' AND u.est_banni = 0 AND u.departement IS NOT NULL AND u.departement <> ''
+             GROUP BY u.departement ORDER BY nombre DESC, u.departement LIMIT " . (int) $limite
+        );
+        $req->execute();
+        return $req->fetchAll();
+    }
+
+    // Les villes d'un département où il y a le plus d'annonces (texte des pages « troc près de chez vous »)
+    public static function villesActives(string $departement, int $limite = 5): array
+    {
+        $req = Database::get()->prepare(
+            "SELECT u.ville FROM objet o JOIN utilisateur u ON u.id = o.id_utilisateur
+             WHERE o.statut = 'disponible' AND u.est_banni = 0 AND u.departement = ? AND u.ville <> ''
+             GROUP BY u.ville ORDER BY COUNT(*) DESC, u.ville LIMIT " . (int) $limite
+        );
+        $req->execute([$departement]);
+        return $req->fetchAll(PDO::FETCH_COLUMN);
+    }
+
     public static function photosSup(int $idObjet): array
     {
         $req = Database::get()->prepare('SELECT * FROM photo_objet WHERE id_objet = ? ORDER BY ordre, id');

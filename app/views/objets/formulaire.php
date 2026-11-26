@@ -80,7 +80,7 @@
             </div>
         </fieldset>
 
-        <label>Photo principale (JPG, PNG ou WEBP)
+        <label>Photo principale (JPG, PNG ou WEBP, <?= Image::tailleMaxMo() ?> Mo max.)
             <input type="file" name="photo" accept="image/jpeg,image/png,image/webp">
         </label>
         <?php if ($modification && !empty($valeurs['photo'])): ?>

@@ -1,10 +1,10 @@
 <?php $moi = utilisateur_connecte(); ?>
 <section class="hero-v2">
     <div class="hero-texte">
-        <span class="sur-titre">Le troc qui monte ↗</span>
+        <span class="sur-titre">Site de troc gratuit entre particuliers ↗</span>
         <h1>Pars d'un trombone.<br><span class="degrade">Vise une voiture.</span></h1>
-        <p class="hero-intro">Sur <?= e(NOM_SITE) ?>, tu échanges un objet contre un peu mieux… puis tu recommences avec ce que tu as reçu.
-           Échange après échange, ta <strong>chaîne</strong> grandit. Gratuit, entre particuliers, près de chez toi.</p>
+        <p class="hero-intro">Sur <?= e(NOM_SITE) ?>, tu <strong>échanges</strong> un objet contre un peu mieux… puis tu recommences avec ce que tu as reçu.
+           Échange après échange, ta <strong>chaîne</strong> grandit. Du <strong>troc près de chez toi</strong>, entre particuliers, gratuit et sans argent.</p>
 
         <form method="get" action="<?= urls_propres() ? url('objet/recherche') : 'index.php' ?>" class="barre-recherche">
             <?php if (!urls_propres()): ?><input type="hidden" name="route" value="objet/recherche"><?php endif; ?>
@@ -108,6 +108,24 @@
         <div><span>3</span><strong>Monte d'un cran</strong><p class="petit">L'échange est accepté ? Tu recommences avec l'objet reçu. Ta chaîne s'affiche sur ton profil.</p></div>
     </div>
     <p><a href="<?= url('page/concept') ?>" class="lien-fort">Tout comprendre en 2 minutes : l'histoire, les règles, la sécurité →</a></p>
+</section>
+
+<!-- Texte pour les visiteurs… et pour Google : les mots que les gens tapent (troc, échange, près de chez vous) -->
+<section class="carte texte-seo">
+    <h2>Le troc près de chez vous, sans argent</h2>
+    <p><?= e(NOM_SITE) ?> est un <strong>site de troc entre particuliers</strong> : au lieu de vendre ce qui ne te sert plus, tu l'<strong>échanges</strong>
+       contre un objet qui t'est utile. Vêtements, jeux vidéo, consoles, téléphones, meubles, vélos, livres… Publie une annonce gratuite,
+       trouve un objet à <strong>troquer près de chez toi</strong> et propose un échange en un clic.</p>
+    <p>La particularité : l'<a href="<?= url('page/concept') ?>">échange vers le haut</a>. Chaque troc te permet de monter d'un cran,
+       comme l'histoire vraie du trombone rouge échangé jusqu'à une maison.</p>
+    <?php if ($departementsActifs): ?>
+        <h3>Troc par département</h3>
+        <p class="liens-departements">
+            <?php foreach ($departementsActifs as $d): ?>
+                <a href="<?= url('objet/recherche', ['departement' => $d['departement']]) ?>">Troc <?= e(nom_departement($d['departement'])) ?> (<?= e($d['departement']) ?>)</a>
+            <?php endforeach; ?>
+        </p>
+    <?php endif; ?>
 </section>
 
 <section class="avantages">

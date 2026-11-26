@@ -47,6 +47,11 @@ class SeoController extends Controller
             }
         }
 
+        // Pages « troc près de chez vous » des départements qui ont des annonces
+        foreach (Objet::departementsActifs() as $d) {
+            $ajouter(url_absolue('objet/recherche', ['departement' => $d['departement']]), $d['derniere']);
+        }
+
         // Annonces visibles
         $annonces = $pdo->query(
             "SELECT o.id, o.titre, o.date_publication

@@ -45,3 +45,18 @@
 <FilesMatch "(^error_log|\.(log|sql|md|sh|bak|ini))$">
     Require all denied
 </FilesMatch>
+
+# ===== Taille des photos envoyées =====
+# PHP refuse les fichiers trop lourds avant même que le site les voie : 10 Mo par photo, 64 Mo par envoi (5 photos max).
+# Ces lignes servent sous MAMP (PHP intégré à Apache). Chez o2switch elles sont ignorées :
+# on règle les mêmes valeurs dans cPanel → Sélectionner une version de PHP → Options.
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 64M
+    php_value memory_limit 256M
+</IfModule>
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 64M
+    php_value memory_limit 256M
+</IfModule>

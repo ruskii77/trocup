@@ -47,6 +47,15 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
 
+## Téléphone, photos et mots-clés (V1.11)
+
+- **Menu téléphone** (bouton « Menu », marche sans JavaScript) avec tous les libellés : Mes échanges, Mes favoris, Mon profil, Mon compte…
+  Annonces sur 2 colonnes et filtres repliables sur petit écran. Boutons « Ajouter aux favoris » / « Retirer des favoris ».
+- **Photos jusqu'à 10 Mo** (`TAILLE_MAX_PHOTO` + limites PHP dans `public/.htaccess` pour MAMP ; sur o2switch :
+  cPanel → Sélectionner une version de PHP → Options : `upload_max_filesize` 10M, `post_max_size` 64M, `memory_limit` 256M).
+- **SEO** : titres et descriptions avec « troc », « échange », « près de chez vous » ; texte de présentation sur l'accueil ;
+  pages **« troc près de chez vous » par département** (`troc/34-herault`), indexées et dans le sitemap.
+
 ## Notifications par email (V1.10)
 
 - Trois types d'emails, chacun activable ou non dans **Mon compte → Notifications** :

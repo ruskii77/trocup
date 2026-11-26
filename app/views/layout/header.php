@@ -41,18 +41,30 @@
             <img src="img/logo.svg" alt="" width="36" height="36">
             <span class="logo-texte"><?= logo_texte() ?></span>
         </a>
-        <nav class="menu">
+        <?php $moi = utilisateur_connecte(); ?>
+
+        <!-- Sur téléphone : bouton « Menu » qui ouvre la liste des liens.
+             Case à cocher + étiquette : marche même sans JavaScript (js/site.js ajoute juste la fermeture au clic dehors). -->
+        <input type="checkbox" id="menu-bascule" class="menu-bascule" aria-hidden="true" tabindex="-1">
+        <label for="menu-bascule" class="bouton-menu" aria-label="Ouvrir ou fermer le menu" aria-controls="menu-principal" tabindex="0">
+            <span class="icone-menu" aria-hidden="true"></span> Menu
+            <?php if ($moi): ?>
+                <span class="badge-notifs" data-total="<?= $nbNotifs ?>" <?= $nbNotifs ? '' : 'hidden' ?>><?= $nbNotifs > 99 ? '99+' : $nbNotifs ?></span>
+            <?php endif; ?>
+        </label>
+
+        <nav class="menu" id="menu-principal" aria-label="Menu principal">
             <a href="<?= url('objet/recherche') ?>">🔍 Chercher</a>
-            <?php if ($moi = utilisateur_connecte()): ?>
+            <?php if ($moi): ?>
                 <a href="<?= url('objet/creer') ?>" class="bouton bouton-petit">+ Publier</a>
-                <a href="<?= url('proposition/mes') ?>" class="lien-notifs">Mes échanges
+                <a href="<?= url('proposition/mes') ?>" class="lien-notifs">💬 Mes échanges
                     <span id="badge-notifs" class="badge-notifs" data-total="<?= $nbNotifs ?>" <?= $nbNotifs ? '' : 'hidden' ?>><?= $nbNotifs > 99 ? '99+' : $nbNotifs ?></span>
                 </a>
-                <a href="<?= url('objet/favoris') ?>" title="Mes favoris">❤️</a>
-                <a href="<?= url('utilisateur/profil', ['id' => $moi['id']]) ?>" class="lien-profil"><?= avatar($moi['pseudo'], $moi['avatar'] ?? null, 30) ?> <span>Mon profil</span></a>
-                <a href="<?= url('utilisateur/compte') ?>" title="Mon compte">⚙️</a>
+                <a href="<?= url('objet/favoris') ?>">❤️ Mes favoris</a>
+                <a href="<?= url('utilisateur/profil', ['id' => $moi['id'], 'slug' => $moi['pseudo']]) ?>" class="lien-profil"><?= avatar($moi['pseudo'], $moi['avatar'] ?? null, 30) ?> <span>Mon profil</span></a>
+                <a href="<?= url('utilisateur/compte') ?>" class="lien-compte" title="Mon compte : réglages, notifications, mot de passe">⚙️ <span>Mon compte</span></a>
                 <?php if (est_admin()): ?>
-                    <a href="<?= url('admin/index') ?>" class="lien-admin">Admin</a>
+                    <a href="<?= url('admin/index') ?>" class="lien-admin">🛡️ Admin</a>
                 <?php endif; ?>
                 <form method="post" action="<?= url('utilisateur/deconnexion') ?>" class="form-inline">
                     <?= csrf_champ() ?>

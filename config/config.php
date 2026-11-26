@@ -56,7 +56,7 @@ defined('SMTP_MOT_DE_PASSE') || define('SMTP_MOT_DE_PASSE', 'mot-de-passe-applic
 // ---------- Fichiers ----------
 defined('DOSSIER_UPLOADS') || define('DOSSIER_UPLOADS', __DIR__ . '/../public/uploads/');
 defined('DOSSIER_EMAILS') || define('DOSSIER_EMAILS', __DIR__ . '/../storage/emails/');
-defined('TAILLE_MAX_PHOTO') || define('TAILLE_MAX_PHOTO', 2 * 1024 * 1024); // 2 Mo
+defined('TAILLE_MAX_PHOTO') || define('TAILLE_MAX_PHOTO', 10 * 1024 * 1024); // 10 Mo par photo (le site la réduit ensuite à ~150 Ko)
 
 // ---------- Sécurité ----------
 defined('MAX_TENTATIVES_CONNEXION') || define('MAX_TENTATIVES_CONNEXION', 5);  // tentatives ratées autorisées sur un même compte…

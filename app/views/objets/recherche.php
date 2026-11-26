@@ -12,7 +12,19 @@ $lienPage = function (int $p) use ($filtres): string {
 };
 $moi = utilisateur_connecte();
 ?>
-<h1><?= $categorie ? e($categorie['nom']) . ' à échanger' : 'Chercher un objet' ?></h1>
+<?php $seulDepartement = !$categorie && $filtres['departement'] !== '' && $filtres['q'] === ''; ?>
+<?php if ($categorie): ?>
+    <h1><?= e($categorie['nom']) ?> à échanger</h1>
+<?php elseif ($seulDepartement): ?>
+    <!-- Page « troc près de chez vous » d'un département (adresse troc/34-herault) -->
+    <h1>Troc <?= e(nom_departement($filtres['departement'])) ?> (<?= e($filtres['departement']) ?>)</h1>
+    <?php if ($page === 1): ?>
+        <p class="intro-categorie">Échange d'objets entre particuliers près de chez vous<?= $villes ? ', à ' . e(implode(', ', $villes)) . '…' : '' ?>
+            Repère une annonce qui te plaît et propose un échange : gratuit, sans argent, et en main propre.</p>
+    <?php endif; ?>
+<?php else: ?>
+    <h1>Chercher un objet à échanger</h1>
+<?php endif; ?>
 <?php if ($categorie && !empty($categorie['description']) && $page === 1): ?>
     <!-- Texte de présentation : aide les visiteurs… et Google à comprendre la page -->
     <p class="intro-categorie"><?= e($categorie['description']) ?></p>
@@ -32,6 +44,14 @@ $moi = utilisateur_connecte();
 <?php endif; ?>
 
 <div class="page-recherche">
+    <?php
+    // Nombre de filtres utilisés (affiché sur le bouton « Filtres » en version téléphone)
+    $nbFiltres = count(array_filter([$filtres['q'], $filtres['departement'], $filtres['etat'], $filtres['valeur_min'], $filtres['valeur_max']], fn($v) => $v !== null && $v !== ''))
+        + count($filtres['caracs']) + ($filtres['tri'] !== 'recent' ? 1 : 0);
+    ?>
+    <!-- Sur téléphone, js/site.js replie ce bloc pour montrer d'abord les annonces -->
+    <details class="filtres-repliables" open <?= $nbFiltres ? 'data-actifs="1"' : '' ?>>
+    <summary class="bouton bouton-secondaire resume-filtres">⚙️ Filtres<?= $nbFiltres ? ' (' . $nbFiltres . ' actif' . ($nbFiltres > 1 ? 's' : '') . ')' : '' ?></summary>
     <form method="get" action="<?= urls_propres() ? url('objet/recherche') : 'index.php' ?>" class="carte panneau-filtres">
         <?php if (!urls_propres()): ?><input type="hidden" name="route" value="objet/recherche"><?php endif; ?>
 
@@ -118,6 +138,7 @@ $moi = utilisateur_connecte();
         <button type="submit" class="bouton bouton-grand">🔍 Chercher</button>
         <a href="<?= url('objet/recherche') ?>" class="petit centre lien-reinit">Effacer les filtres</a>
     </form>
+    </details>
 
     <section class="resultats">
         <p class="nombre-resultats">

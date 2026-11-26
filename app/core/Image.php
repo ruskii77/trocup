@@ -10,11 +10,15 @@ class Image
     // Renvoie le chemin relatif au dossier uploads, ex : 'a1b2….jpg' ou 'avatars/c3d4….jpg'
     public static function enregistrer(array $fichier, string $format): string
     {
+        $max = 'La photo ne doit pas dépasser ' . self::tailleMaxMo() . ' Mo.';
+        if (in_array($fichier['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+            throw new RuntimeException($max); // refusée par PHP (upload_max_filesize)
+        }
         if ($fichier['error'] !== UPLOAD_ERR_OK) {
             throw new RuntimeException('L\'envoi de la photo a échoué.');
         }
         if ($fichier['size'] > TAILLE_MAX_PHOTO) {
-            throw new RuntimeException('La photo ne doit pas dépasser ' . (TAILLE_MAX_PHOTO / 1024 / 1024) . ' Mo.');
+            throw new RuntimeException($max);
         }
         // On vérifie le VRAI type du fichier (pas son extension, qui peut mentir)
         $type = (new finfo(FILEINFO_MIME_TYPE))->file($fichier['tmp_name']);
@@ -48,6 +52,16 @@ class Image
         imagedestroy($source);
         imagedestroy($resultat);
         return $nom;
+    }
+
+    // Taille maximale réelle d'une photo, en Mo : la plus petite entre celle du site et celle de PHP
+    public static function tailleMaxMo(): int
+    {
+        $php = trim((string) ini_get('upload_max_filesize'));
+        $octets = (int) $php;
+        $unite = strtoupper(substr($php, -1));
+        $octets *= ['G' => 1073741824, 'M' => 1048576, 'K' => 1024][$unite] ?? 1;
+        return (int) floor(min(TAILLE_MAX_PHOTO, $octets ?: TAILLE_MAX_PHOTO) / 1048576);
     }
 
     public static function supprimer(?string $nom): void

@@ -1,6 +1,6 @@
 <h1>❤️ Mes favoris</h1>
 <?php if (!$objets): ?>
-    <p class="vide">Aucun favori pour l'instant. Clique sur 🤍 sur une annonce pour la garder de côté.</p>
+    <p class="vide">Aucun favori pour l'instant. Sur une annonce, clique sur « 🤍 Ajouter aux favoris » pour la garder de côté.</p>
     <a href="<?= url('objet/recherche') ?>" class="bouton">Chercher des objets</a>
 <?php else: ?>
     <p class="petit"><?= count($objets) ?> annonce<?= count($objets) > 1 ? 's' : '' ?> gardée<?= count($objets) > 1 ? 's' : '' ?> de côté.</p>

@@ -3,12 +3,16 @@
 (function () {
     const badge = document.getElementById('badge-notifs');
     if (!badge) return; // pas connecté : rien à faire
+    // Le même chiffre est affiché à deux endroits : dans le menu et sur le bouton « Menu » (téléphone)
+    const badges = document.querySelectorAll('.badge-notifs');
 
     const titreOrigine = document.title.replace(/^\(\d+\) /, '');
 
     function afficher(total) {
-        badge.textContent = total > 99 ? '99+' : total;
-        badge.hidden = total === 0;
+        badges.forEach(function (b) {
+            b.textContent = total > 99 ? '99+' : total;
+            b.hidden = total === 0;
+        });
         // Le chiffre apparaît aussi dans l'onglet du navigateur : « (2) Visota »
         document.title = total > 0 ? '(' + total + ') ' + titreOrigine : titreOrigine;
     }

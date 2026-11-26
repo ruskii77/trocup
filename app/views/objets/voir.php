@@ -38,7 +38,7 @@ $connecte = utilisateur_connecte();
                 <form method="post" action="<?= url('objet/favori') ?>">
                     <?= csrf_champ() ?><input type="hidden" name="id" value="<?= $objet['id'] ?>">
                     <button type="submit" class="bouton-favori <?= $estFavori ? 'actif' : '' ?>" title="<?= $estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris' ?>">
-                        <?= $estFavori ? '❤️' : '🤍' ?> <span><?= $estFavori ? 'Dans tes favoris' : 'Favori' ?></span>
+                        <?= $estFavori ? '❤️' : '🤍' ?> <span><?= $estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris' ?></span>
                     </button>
                 </form>
             <?php endif; ?>
