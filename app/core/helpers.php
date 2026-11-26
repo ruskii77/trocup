@@ -107,6 +107,13 @@ function utilisateur_connecte(): ?array
     return $_SESSION['utilisateur'] ?? null;
 }
 
+// Petite empreinte du mot de passe (chiffré) gardée dans la session : si le mot de passe change, elle ne correspond
+// plus et les sessions ouvertes ailleurs sont fermées. Ce n'est pas le mot de passe, ni même son empreinte complète.
+function empreinte_session(string $hashMotDePasse): string
+{
+    return substr(hash_hmac('sha256', $hashMotDePasse, CLE_SECRETE), 0, 16);
+}
+
 function est_admin(): bool
 {
     return (utilisateur_connecte()['role'] ?? '') === 'admin';

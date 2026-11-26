@@ -29,8 +29,10 @@ defined('SLOGAN') || define('SLOGAN', 'Pars d\'un trombone. Vise une voiture.');
 // Adresse complète du site, utilisée pour les liens dans les emails (sans / à la fin)
 defined('URL_SITE') || define('URL_SITE', getenv('URL_SITE') ?: 'http://localhost:8888/projet-echange/public');
 
-// true pendant que tu développes, false une fois le site en ligne
-defined('MODE_DEV') || define('MODE_DEV', true);
+// true pendant que tu développes, false une fois le site en ligne.
+// Par sécurité, il n'est activé tout seul QUE sur ton ordinateur (adresse localhost) : si un jour config.local.php
+// oublie la ligne MODE_DEV, le site en ligne n'affichera quand même jamais ses erreurs ni la boîte mail de test.
+defined('MODE_DEV') || define('MODE_DEV', (bool) preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/|$)#', URL_SITE));
 
 // ---------- Pages légales (à compléter avant la mise en ligne, dans config.local.php) ----------
 defined('EDITEUR_NOM')       || define('EDITEUR_NOM', '[Ton prénom et nom]');

@@ -9,7 +9,7 @@ class Favori
             $pdo->prepare('DELETE FROM favori WHERE id_utilisateur = ? AND id_objet = ?')->execute([$idUtilisateur, $idObjet]);
             return false;
         }
-        $pdo->prepare('INSERT INTO favori (id_utilisateur, id_objet) VALUES (?, ?)')->execute([$idUtilisateur, $idObjet]);
+        $pdo->prepare('INSERT IGNORE INTO favori (id_utilisateur, id_objet) VALUES (?, ?)')->execute([$idUtilisateur, $idObjet]);
         return true;
     }
 

@@ -34,7 +34,7 @@ class Image
 
         $sousDossier = $format === 'avatar' ? 'avatars/' : '';
         if (!is_dir(DOSSIER_UPLOADS . $sousDossier)) {
-            mkdir(DOSSIER_UPLOADS . $sousDossier, 0777, true);
+            mkdir(DOSSIER_UPLOADS . $sousDossier, 0755, true); // 0755 : seul le site peut y écrire
         }
         $nom = $sousDossier . bin2hex(random_bytes(16));
 
@@ -47,6 +47,7 @@ class Image
             return $nom;
         }
 
+        self::verifierDimensions($chemin);
         $source = self::ouvrir($chemin, $type);
         $source = self::redresser($source, $chemin, $type);
         $resultat = $format === 'avatar' ? self::carre($source, 400) : self::reduire($source, 1200);
@@ -61,6 +62,35 @@ class Image
             unlink($chemin); // JPEG temporaire issu d'une photo HEIC
         }
         return $nom;
+    }
+
+    // « Bombe d'image » : un fichier PNG de quelques Ko peut annoncer 50 000 × 50 000 pixels.
+    // L'ouvrir demanderait des Go de mémoire et ferait planter la page : on refuse avant, avec un message clair.
+    private static function verifierDimensions(string $chemin): void
+    {
+        $infos = @getimagesize($chemin);
+        if (!$infos || $infos[0] < 1 || $infos[1] < 1) {
+            throw new RuntimeException('Cette photo est illisible. Essaie avec une autre photo.');
+        }
+        $pixels = $infos[0] * $infos[1];
+        // ~9 octets par pixel : 4 pour décoder la photo, 4 pour la copie redressée, + marge, comparés à la mémoire encore libre pour PHP
+        $limite = self::octets((string) ini_get('memory_limit'));
+        $libre = $limite > 0 ? $limite - memory_get_usage() : PHP_INT_MAX;
+        if ($pixels > 100_000_000 || $pixels * 9 > $libre) {
+            throw new RuntimeException('Cette photo est trop grande (' . $infos[0] . ' × ' . $infos[1] . ' pixels). '
+                . 'Réduis-la ou fais une capture d\'écran de la photo, puis réessaie.');
+        }
+    }
+
+    // « 256M » → 268435456 ; « -1 » (pas de limite) → 0
+    private static function octets(string $valeur): int
+    {
+        $valeur = trim($valeur);
+        $nombre = (int) $valeur;
+        if ($nombre <= 0) {
+            return 0;
+        }
+        return $nombre * (['G' => 1073741824, 'M' => 1048576, 'K' => 1024][strtoupper(substr($valeur, -1))] ?? 1);
     }
 
     // HEIC/HEIF = format photo des iPhone. Reconnu par son type, ou par sa « signature » (octets 4 à 12 : ftypheic, ftypmif1…)
@@ -100,10 +130,7 @@ class Image
     // Taille maximale réelle d'une photo, en Mo : la plus petite entre celle du site et celle de PHP
     public static function tailleMaxMo(): int
     {
-        $php = trim((string) ini_get('upload_max_filesize'));
-        $octets = (int) $php;
-        $unite = strtoupper(substr($php, -1));
-        $octets *= ['G' => 1073741824, 'M' => 1048576, 'K' => 1024][$unite] ?? 1;
+        $octets = self::octets((string) ini_get('upload_max_filesize'));
         return (int) floor(min(TAILLE_MAX_PHOTO, $octets ?: TAILLE_MAX_PHOTO) / 1048576);
     }
 

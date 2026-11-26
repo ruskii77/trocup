@@ -211,8 +211,9 @@ class AdminController extends Controller
         $id = (int) ($_POST['id_utilisateur'] ?? 0);
         if ($id === (int) $admin['id']) {
             flash('erreur', 'Tu ne peux pas te bannir toi-même.');
+        } elseif (!Utilisateur::definirBannissement($id, $banni)) {
+            flash('erreur', 'Rien n\'a changé : membre introuvable, déjà dans cet état, ou administrateur (un admin ne peut pas être banni).');
         } else {
-            Utilisateur::definirBannissement($id, $banni);
             if ($banni) {
                 SignalementMembre::traiterPourMembre($id);
                 $this->prevenir($id, 'Ton compte a été suspendu', 'Ton compte ' . NOM_SITE . ' a été suspendu par la modération.');

@@ -62,7 +62,7 @@ class ObjetController extends Controller
     public function recherche(): void
     {
         $filtres = [
-            'q'           => trim($_GET['q'] ?? ''),
+            'q'           => mb_substr(trim($_GET['q'] ?? ''), 0, 100),
             'categorie'   => (int) ($_GET['categorie'] ?? 0) ?: null,
             'departement' => isset(departements()[$_GET['departement'] ?? '']) ? $_GET['departement'] : '',
             'etat'        => in_array($_GET['etat'] ?? '', ['neuf', 'tres_bon', 'bon', 'use'], true) ? $_GET['etat'] : '',
@@ -378,7 +378,8 @@ class ObjetController extends Controller
         $this->exigerPost();
         $u = $this->exigerConnexion();
         $objet = Objet::trouverParId((int) ($_POST['id'] ?? 0));
-        if (!$objet) {
+        // On peut toujours retirer un favori, mais on n'ajoute qu'une annonce visible
+        if (!$objet || (!Favori::estFavori($u['id'], $objet['id']) && $objet['statut'] !== 'disponible')) {
             $this->pageIntrouvable();
         }
         $ajoute = Favori::basculer($u['id'], $objet['id']);
@@ -447,7 +448,7 @@ class ObjetController extends Controller
         $erreurs = [];
 
         if ($v['titre'] === '' || mb_strlen($v['titre']) > 100) $erreurs[] = 'Le titre est obligatoire (100 caractères maximum).';
-        if ($v['description'] === '')                            $erreurs[] = 'La description est obligatoire.';
+        if ($v['description'] === '' || mb_strlen($v['description']) > 5000) $erreurs[] = 'La description est obligatoire (5 000 caractères maximum).';
         if (!in_array($v['etat'], ['neuf', 'tres_bon', 'bon', 'use'], true)) $erreurs[] = 'État invalide.';
         if (!is_numeric($v['valeur_estimee']) || $v['valeur_estimee'] < 0 || $v['valeur_estimee'] > 1000000) {
             $erreurs[] = 'La valeur estimée doit être un nombre positif.';

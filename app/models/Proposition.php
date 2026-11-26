@@ -63,12 +63,34 @@ class Proposition
         $req->execute([$statut, $id]);
     }
 
-    // Accepter un échange : tout se fait dans une TRANSACTION (tout réussit ou rien ne change)
-    public static function accepter(array $p): void
+    // Accepter un échange : tout se fait dans une TRANSACTION (tout réussit ou rien ne change).
+    // Renvoie false si l'échange n'est plus possible (objet déjà échangé, retiré, proposition plus en attente…).
+    //
+    // « FOR UPDATE » verrouille la proposition et les deux objets jusqu'à la fin de la transaction :
+    // si deux échanges sur le même objet sont acceptés à la même seconde (deux onglets, double clic),
+    // le second attend le premier, puis voit que l'objet a changé de main et s'arrête. Sans ça, l'objet
+    // pouvait partir chez deux personnes et l'une d'elles perdait son propre objet.
+    public static function accepter(array $p): bool
     {
         $pdo = Database::get();
         $pdo->beginTransaction();
         try {
+            $req = $pdo->prepare("SELECT statut FROM proposition WHERE id = ? FOR UPDATE");
+            $req->execute([$p['id']]);
+            $statut = $req->fetchColumn();
+            $req = $pdo->prepare('SELECT id, id_utilisateur, statut FROM objet WHERE id IN (?, ?) FOR UPDATE');
+            $req->execute([$p['id_objet_propose'], $p['id_objet_demande']]);
+            $objets = array_column($req->fetchAll(), null, 'id');
+            $o1 = $objets[$p['id_objet_propose']] ?? null;
+            $o2 = $objets[$p['id_objet_demande']] ?? null;
+            if ($statut !== 'en_attente' || !$o1 || !$o2
+                || $o1['statut'] !== 'disponible' || $o2['statut'] !== 'disponible'
+                || (int) $o1['id_utilisateur'] !== (int) $p['id_proposeur']
+                || (int) $o2['id_utilisateur'] !== (int) $p['id_destinataire']) {
+                $pdo->rollBack();
+                return false;
+            }
+
             self::changerStatut($p['id'], 'acceptee');
 
             // Les deux objets changent de propriétaire
@@ -84,6 +106,7 @@ class Proposition
             )->execute([$p['id'], $p['id_objet_propose'], $p['id_objet_demande'], $p['id_objet_propose'], $p['id_objet_demande']]);
 
             $pdo->commit();
+            return true;
         } catch (Throwable $e) {
             $pdo->rollBack();
             throw $e;

@@ -14,6 +14,11 @@ class CookiesController extends Controller
             http_response_code(400);
             exit('{}');
         }
+        // Anti-spam : un robot ne peut pas remplir la base avec des milliers de faux choix
+        if (!Limiteur::autoriser('cookies', $_SERVER['REMOTE_ADDR'] ?? '')) {
+            http_response_code(429);
+            exit('{}');
+        }
         // On ne garde que les catégories connues, en vrai/faux
         $choix = [];
         foreach (Cookies::categories() as $cle => $cat) {

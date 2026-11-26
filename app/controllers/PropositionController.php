@@ -91,16 +91,13 @@ class PropositionController extends Controller
         if ((int) $p['id_destinataire'] !== (int) $u['id'] || $p['statut'] !== 'en_attente') {
             flash('erreur', 'Cette proposition ne peut plus être acceptée.');
         } else {
-            // On revérifie que les deux objets sont toujours disponibles chez les bonnes personnes
-            $o1 = Objet::trouverParId($p['id_objet_propose']);
-            $o2 = Objet::trouverParId($p['id_objet_demande']);
-            if ($o1['statut'] !== 'disponible' || $o2['statut'] !== 'disponible'
-                || (int) $o1['id_utilisateur'] !== (int) $p['id_proposeur']
-                || (int) $o2['id_utilisateur'] !== (int) $p['id_destinataire']) {
-                Proposition::changerStatut($p['id'], 'annulee');
+            // Proposition::accepter revérifie tout (objets toujours disponibles, chez les bonnes personnes) en verrouillant la base
+            if (!Proposition::accepter($p)) {
+                if (Proposition::trouverParId($p['id'])['statut'] === 'en_attente') {
+                    Proposition::changerStatut($p['id'], 'annulee');
+                }
                 flash('erreur', 'Un des objets n\'est plus disponible, la proposition est annulée.');
             } else {
-                Proposition::accepter($p);
                 NotifEmail::prevenir($p, (int) $p['id_proposeur'], 'Ta proposition a été acceptée 🎉', 'proposition');
                 flash('succes', 'Échange accepté ! Organisez la rencontre par message, dans un lieu public.');
             }

@@ -178,8 +178,10 @@ class Utilisateur
         // On accepte aussi les « phrases de passe » longues (16 caractères ou plus), faciles à retenir et robustes.
         $types = preg_match('/[a-z]/', $mdp) + preg_match('/[A-Z]/', $mdp) + preg_match('/\d/', $mdp) + preg_match('/[^a-zA-Z\d]/', $mdp);
         $longueur = mb_strlen($mdp);
-        if ($longueur > 72) {
-            return 'Le mot de passe ne doit pas dépasser 72 caractères.'; // limite technique de l'algorithme bcrypt
+        // Limite technique de l'algorithme bcrypt : 72 OCTETS (un « é » ou un emoji compte pour 2 à 4).
+        // Au-delà, la fin du mot de passe serait ignorée sans prévenir.
+        if (strlen($mdp) > 72) {
+            return 'Le mot de passe est trop long (72 caractères maximum, un peu moins avec des accents ou des emojis).';
         }
         if (!($longueur >= 16 || ($longueur >= 8 && $types >= 3))) {
             return 'Mot de passe trop faible : au moins 8 caractères avec 3 types parmi minuscules, majuscules, chiffres et symboles (ou une phrase de 16 caractères ou plus).';
@@ -190,11 +192,12 @@ class Utilisateur
         return null;
     }
 
-    public static function definirBannissement(int $id, bool $banni): void
+    // Renvoie false si rien n'a changé (membre introuvable, ou admin : on ne peut pas bannir un admin)
+    public static function definirBannissement(int $id, bool $banni): bool
     {
-        // On ne peut pas bannir un admin
-        $req = Database::get()->prepare("UPDATE utilisateur SET est_banni = ? WHERE id = ? AND role <> 'admin'");
+        $req = Database::get()->prepare("UPDATE utilisateur SET est_banni = ? WHERE id = ? AND role <> 'admin' AND supprime = 0");
         $req->execute([$banni ? 1 : 0, $id]);
+        return $req->rowCount() > 0;
     }
 
     public static function supprimer(int $id): void

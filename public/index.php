@@ -92,8 +92,31 @@ $routes = [
     'seo/sitemap'            => ['SeoController', 'sitemap'],
 ];
 
+// Un pirate peut envoyer « ?q[]=x » au lieu de « ?q=x » : PHP reçoit alors un tableau là où le site attend un texte,
+// ce qui provoquait une erreur 500. Seuls les champs qui sont VRAIMENT des listes gardent leur forme de tableau.
+function nettoyer_saisie(array $saisie, array $listes): array
+{
+    foreach ($saisie as $cle => $valeur) {
+        if (!is_array($valeur)) {
+            continue;
+        }
+        if (in_array($cle, $listes, true)) {
+            // une liste de textes, sur un seul niveau (pas de tableau dans le tableau)
+            $saisie[$cle] = array_filter($valeur, 'is_scalar');
+        } else {
+            $saisie[$cle] = '';
+        }
+    }
+    return $saisie;
+}
+$_GET  = nettoyer_saisie($_GET, ['c']);
+$_POST = nettoyer_saisie($_POST, ['c', 'notifs', 'supprimer_photos', 'categories']);
+
 try {
     $route = $_GET['route'] ?? null;
+    if (!is_string($route)) {
+        $route = null;
+    }
     if ($route === null) {
         // Adresse propre : on retrouve la page à partir du chemin (ex : annonce/12-velo → objet/voir, id 12)
         $chemin = substr(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', strlen(base_chemin()) - 1);
@@ -134,10 +157,19 @@ try {
     // Si l'utilisateur connecté a été banni entre-temps, on le déconnecte
     if (!Migrations::baseVide() && $u = utilisateur_connecte()) {
         $frais = Utilisateur::trouverParId($u['id']);
-        if (!$frais || $frais['est_banni']) {
+        $empreinte = empreinte_session($frais['mot_de_passe_hash'] ?? '');
+        if (!$frais || $frais['est_banni'] || !empty($frais['supprime'])) {
             $_SESSION = [];
             flash('erreur', 'Ton compte a été suspendu.');
+        } elseif (isset($u['empreinte']) && !hash_equals($u['empreinte'], $empreinte)) {
+            // Le mot de passe a changé depuis (« Mot de passe oublié », ou changé sur un autre appareil) :
+            // les autres sessions ouvertes sont fermées. Si quelqu'un t'avait volé ta session, il est mis dehors.
+            $_SESSION = [];
+            session_regenerate_id(true);
+            flash('info', 'Ton mot de passe a été changé : reconnecte-toi.');
         } else {
+            $_SESSION['utilisateur']['empreinte'] = $empreinte; // sessions ouvertes avant cette version
+
             // garde le rôle et le département à jour
             $_SESSION['utilisateur']['role'] = $frais['role'];
             $_SESSION['utilisateur']['departement'] = $frais['departement'];

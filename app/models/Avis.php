@@ -21,7 +21,7 @@ class Avis
     public static function creer(int $idProposition, int $idAuteur, int $idDestinataire, int $note, string $commentaire): void
     {
         $req = Database::get()->prepare(
-            'INSERT INTO avis (id_proposition, id_auteur, id_destinataire, note, commentaire) VALUES (?, ?, ?, ?, ?)'
+            'INSERT IGNORE INTO avis (id_proposition, id_auteur, id_destinataire, note, commentaire) VALUES (?, ?, ?, ?, ?)'
         );
         $req->execute([$idProposition, $idAuteur, $idDestinataire, $note, $commentaire]);
     }

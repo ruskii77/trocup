@@ -9,7 +9,7 @@ class Blocage
             $pdo->prepare('DELETE FROM blocage WHERE id_bloqueur = ? AND id_bloque = ?')->execute([$bloqueur, $bloque]);
             return false;
         }
-        $pdo->prepare('INSERT INTO blocage (id_bloqueur, id_bloque) VALUES (?, ?)')->execute([$bloqueur, $bloque]);
+        $pdo->prepare('INSERT IGNORE INTO blocage (id_bloqueur, id_bloque) VALUES (?, ?)')->execute([$bloqueur, $bloque]);
         // Les propositions en attente entre les deux sont annulées
         $pdo->prepare(
             "UPDATE proposition SET statut = 'annulee', date_reponse = NOW(6)

@@ -47,6 +47,24 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
 
+## Audit de sécurité (V1.13.3)
+
+Aucune migration. Corrections après un audit complet du code (injections, XSS, CSRF, accès, envois de fichiers) :
+- **Saisies piégées** : un champ envoyé sous forme de tableau (`?q[]=x`) faisait planter 14 pages (erreur 500).
+  `public/index.php` remet ces champs en texte ; seules les vraies listes (`c`, `notifs`, `categories`…) restent des listes.
+- **Sessions** : changer son mot de passe (ou « Mot de passe oublié ») ferme toutes les autres sessions ouvertes.
+- **Échanges** : deux acceptations à la même seconde sur le même objet ne peuvent plus l'envoyer chez deux personnes
+  (verrou `SELECT … FOR UPDATE` dans `Proposition::accepter`).
+- **Anti-spam** : « Renvoyer l'email de confirmation » et « Mot de passe oublié » limités par compte (3 par heure),
+  journal des cookies limité à 30 envois par heure et par connexion.
+- **Connexion** : même durée de réponse si l'email n'existe pas (on ne peut plus deviner qui est inscrit en chronométrant).
+- **Photos** : une image « bombe » (50 000 × 50 000 pixels dans un petit fichier) est refusée avec un message, au lieu
+  de saturer la mémoire ; dossiers de photos créés en 0755.
+- **Divers** : `MODE_DEV` n'est plus actif par défaut en ligne (seulement sur localhost), recherche : `%` et `_` cherchés
+  tels quels, description limitée à 5 000 caractères, mot de passe limité à 72 octets (limite de bcrypt), favoris
+  seulement sur des annonces visibles, double clic sur un avis ou un favori sans erreur, en-tête
+  `Cross-Origin-Opener-Policy`, un admin ne peut plus « bannir » un autre admin avec un faux email de suspension.
+
 ## Autour de moi, villes, photos (V1.13)
 
 - **Recherche « Autour de »** une ville ou de « 📍 Ma position », dans un rayon de 0 (cette ville uniquement) à 200 km,

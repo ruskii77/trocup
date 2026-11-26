@@ -47,6 +47,7 @@ class Securite
         header('X-Content-Type-Options: nosniff');           // ne pas « deviner » le type des fichiers
         header('X-Frame-Options: SAMEORIGIN');               // interdit d'afficher le site dans une iframe ailleurs
         header('Referrer-Policy: strict-origin-when-cross-origin');
+        header('Cross-Origin-Opener-Policy: same-origin');     // une page d'un autre site ouverte depuis Visota ne peut pas la contrôler
         // geolocation=(self) : seul NOTRE site peut demander la position (bouton « 📍 Ma position » de la recherche)
         header('Permissions-Policy: camera=(), microphone=(), geolocation=(self), payment=()');
         if ($https) {

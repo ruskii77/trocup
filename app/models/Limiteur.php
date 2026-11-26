@@ -10,7 +10,11 @@ class Limiteur
         'proposition' => [15, 60],
         'message'     => [40, 10],
         'signalement' => [10, 1440],
-        'mdp_oublie'  => [5, 60],
+        'mdp_oublie'  => [5, 60],    // par adresse IP
+        'mdp_oublie_compte' => [3, 60], // par compte (protège sa boîte mail)
+        'renvoi_ip'   => [5, 60],    // « Renvoyer l'email de confirmation »
+        'renvoi_compte' => [3, 60],
+        'cookies'     => [30, 60],   // preuves de choix des cookies, par adresse IP
     ];
 
     // Renvoie true si l'action est permise (et la compte), false si la limite est atteinte

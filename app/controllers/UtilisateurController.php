@@ -46,8 +46,18 @@ class UtilisateurController extends Controller
 
             if (!$erreurs) {
                 // On enregistre le nom officiel de la ville (« Sète » même si on a tapé « sete ») et son point GPS
-                $id = Utilisateur::creer($valeurs['pseudo'], $valeurs['email'], $_POST['mot_de_passe'], $commune['nom'], $valeurs['code_postal'], $departement,
-                                         (float) $commune['latitude'], (float) $commune['longitude']);
+                try {
+                    $id = Utilisateur::creer($valeurs['pseudo'], $valeurs['email'], $_POST['mot_de_passe'], $commune['nom'], $valeurs['code_postal'], $departement,
+                                             (float) $commune['latitude'], (float) $commune['longitude']);
+                } catch (PDOException $ex) {
+                    // Double clic sur « S'inscrire », ou quelqu'un a pris le même pseudo à la même seconde
+                    if ($ex->getCode() !== '23000') {
+                        throw $ex;
+                    }
+                    $erreurs[] = 'Ce pseudo ou cet email vient d\'être utilisé. Choisis-en un autre, ou connecte-toi.';
+                    $this->afficher('utilisateurs/inscription', ['valeurs' => $valeurs, 'erreurs' => $erreurs], 'Inscription');
+                    return;
+                }
                 Limiteur::compter('inscription', $_SERVER['REMOTE_ADDR'] ?? ''); // seules les inscriptions réussies comptent
                 $this->envoyerEmailVerification(Utilisateur::trouverParId($id));
                 $_SESSION['email_en_attente'] = $valeurs['email'];
@@ -88,7 +98,9 @@ class UtilisateurController extends Controller
     {
         $this->exigerPost();
         $u = Utilisateur::trouverParEmail(mb_strtolower(trim($_POST['email'] ?? '')));
-        if ($u && !$u['email_verifie'] && !$u['est_banni']) {
+        // Anti-spam : sans limite, un robot pourrait remplir la boîte mail de quelqu'un avec ce bouton
+        if ($u && !$u['email_verifie'] && !$u['est_banni']
+            && Limiteur::autoriser('renvoi_ip', $_SERVER['REMOTE_ADDR'] ?? '') && Limiteur::autoriser('renvoi_compte', (string) $u['id'])) {
             $this->envoyerEmailVerification($u);
         }
         // Même réponse dans tous les cas : on ne révèle pas quels emails sont inscrits
@@ -116,8 +128,11 @@ class UtilisateurController extends Controller
                 $erreur = 'Trop de tentatives ratées. Réessaie dans ' . DUREE_BLOCAGE_MINUTES . ' minutes, ou réinitialise ton mot de passe.';
             } else {
                 $u = Utilisateur::trouverParEmail($email);
-                // Même message si l'email ou le mot de passe est faux : on ne dit pas lequel (sécurité)
-                if (!$u || !password_verify($_POST['mot_de_passe'] ?? '', $u['mot_de_passe_hash'])) {
+                // Même message si l'email ou le mot de passe est faux : on ne dit pas lequel (sécurité).
+                // Même pour un email inconnu, on vérifie un mot de passe « bidon » : la réponse prend le même temps,
+                // un pirate ne peut donc pas deviner quels emails sont inscrits en chronométrant le site.
+                $hash = $u['mot_de_passe_hash'] ?? '$2y$10$8c/eyADetWeu77CwOMzHvuDwq3hExRQEjHlonZOmRA0xLmnXVO3OO';
+                if (!password_verify((string) ($_POST['mot_de_passe'] ?? ''), $hash) || !$u) {
                     TentativeConnexion::enregistrerEchec($email, $ip);
                     $erreur = 'Email ou mot de passe incorrect.';
                 } elseif ($u['est_banni']) {
@@ -154,7 +169,9 @@ class UtilisateurController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             csrf_verifier();
             $u = Utilisateur::trouverParEmail(mb_strtolower(trim($_POST['email'] ?? '')));
-            if ($u && !$u['est_banni'] && Limiteur::autoriser('mdp_oublie', $_SERVER['REMOTE_ADDR'] ?? '')) {
+            // Limites : 5 demandes par heure depuis une connexion, et 3 par heure pour un même compte (anti-spam de sa boîte mail)
+            if ($u && !$u['est_banni'] && Limiteur::autoriser('mdp_oublie', $_SERVER['REMOTE_ADDR'] ?? '')
+                && Limiteur::autoriser('mdp_oublie_compte', (string) $u['id'])) {
                 $jeton = Jeton::creer($u['id'], 'reinitialisation', 60);
                 Mailer::envoyer(
                     $u['email'], 'Réinitialise ton mot de passe', 'Mot de passe oublié ?',
@@ -281,6 +298,9 @@ class UtilisateurController extends Controller
                     $erreurs[] = $err;
                 } else {
                     Utilisateur::changerMotDePasse($u['id'], $_POST['mot_de_passe']);
+                    // Cette session reste ouverte ; toutes les autres (autres appareils, session volée…) seront fermées
+                    session_regenerate_id(true);
+                    $_SESSION['utilisateur']['empreinte'] = empreinte_session(Utilisateur::trouverParId($u['id'])['mot_de_passe_hash']);
                     Mailer::envoyer($u['email'], 'Ton mot de passe a été modifié', 'Mot de passe modifié',
                         "Bonjour {$u['pseudo']},\nLe mot de passe de ton compte vient d'être changé. Si ce n'est pas toi, utilise tout de suite « Mot de passe oublié ».");
                     flash('succes', 'Mot de passe modifié.');
@@ -409,6 +429,7 @@ class UtilisateurController extends Controller
         $_SESSION['utilisateur'] = [
             'id' => (int) $u['id'], 'pseudo' => $u['pseudo'], 'role' => $u['role'],
             'departement' => $u['departement'], 'avatar' => $u['avatar'] ?? null,
+            'empreinte' => empreinte_session($u['mot_de_passe_hash']),
         ];
     }
 

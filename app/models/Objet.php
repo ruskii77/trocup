@@ -37,8 +37,10 @@ class Objet
 
         if ($f['q'] !== '') {
             $where .= ' AND (o.titre LIKE ? OR o.description LIKE ?)';
-            $params[] = '%' . $f['q'] . '%';
-            $params[] = '%' . $f['q'] . '%';
+            // addcslashes : un « % » ou un « _ » tapé est cherché tel quel (sinon ce sont des jokers SQL)
+            $motif = '%' . addcslashes($f['q'], '%_\\') . '%';
+            $params[] = $motif;
+            $params[] = $motif;
         }
         if ($f['categorie']) {
             // Une catégorie principale inclut toutes ses sous-catégories
