@@ -407,13 +407,27 @@
                 boutonPosition.disabled = true;
                 boutonPosition.textContent = '⏳ Localisation…';
                 navigator.geolocation.getCurrentPosition(function (pos) {
-                    champLat.value = pos.coords.latitude.toFixed(5);
-                    champLon.value = pos.coords.longitude.toFixed(5);
                     if (rayon && rayon.value === '') rayon.value = '30';
-                    fetch('index.php?route=geo/autour&lat=' + champLat.value + '&lon=' + champLon.value)
+                    // Vie privée : la position exacte part une seule fois au serveur (en POST, jamais enregistrée),
+                    // qui répond avec la ville la plus proche. On cherche ensuite autour du CENTRE de cette ville,
+                    // donc la position exacte n'apparaît ni dans l'adresse de la page, ni dans l'historique.
+                    const donnees = new FormData();
+                    donnees.append('lat', pos.coords.latitude.toFixed(5));
+                    donnees.append('lon', pos.coords.longitude.toFixed(5));
+                    fetch('index.php?route=geo/autour', { method: 'POST', body: donnees })
                         .then(function (r) { return r.json(); })
-                        .then(function (v) { autour.value = v.libelle || 'Ma position'; })
-                        .catch(function () { autour.value = 'Ma position'; })
+                        .then(function (v) {
+                            if (!v.libelle) throw new Error('aucune ville');
+                            autour.value = v.libelle;
+                            champLat.value = v.lat;
+                            champLon.value = v.lon;
+                        })
+                        .catch(function () {
+                            // secours : position arrondie à ~1 km
+                            autour.value = 'Ma position';
+                            champLat.value = pos.coords.latitude.toFixed(2);
+                            champLon.value = pos.coords.longitude.toFixed(2);
+                        })
                         .finally(function () { formAutour.submit(); });
                 }, function () {
                     // refusée ou introuvable : on le dit sur le bouton, la personne peut taper sa ville

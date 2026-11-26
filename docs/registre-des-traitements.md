@@ -28,6 +28,16 @@
 | Destinataires | Membres concernés (messages : uniquement les 2 participants) ; éditeur |
 | Durée de conservation | Durée du compte ; après suppression : compte anonymisé, contenus retirés |
 
+## Traitement n°2 bis — Localisation (recherche « autour de moi »)
+| Rubrique | Contenu |
+|---|---|
+| Finalité | Montrer les annonces proches d'un membre, recherche dans un rayon de 0 à 200 km, affichage des distances |
+| Base légale | Exécution du contrat (point GPS de la commune) ; consentement donné dans le navigateur (bouton facultatif « Ma position ») |
+| Données | Point GPS du centre de la commune du membre (déduit de son code postal) ; position du navigateur : utilisée une seule fois, non conservée |
+| Destinataires | Éditeur ; o2switch (hébergement) ; les autres membres voient seulement la ville et une distance arrondie au km |
+| Durée de conservation | Point GPS de la commune : durée du compte (effacé à la suppression) ; position du navigateur : aucune conservation |
+| Sécurité | Position envoyée en POST (absente des journaux du serveur), remplacée par le centre de la commune avant la recherche |
+
 ## Traitement n°3 — Modération et signalements
 | Rubrique | Contenu |
 |---|---|

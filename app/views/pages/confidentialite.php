@@ -27,9 +27,17 @@
        Les photos envoyées sont réenregistrées par le site, ce qui efface leurs métadonnées (dont la position GPS que les téléphones ajoutent parfois).</p>
 
     <h2>Qui voit quoi ?</h2>
-    <p>Le bouton « 📍 Ma position » de la recherche demande ta position à ton navigateur (tu peux refuser). Elle sert seulement
-       à trouver la ville la plus proche pour cette recherche : elle n'est <strong>jamais enregistrée</strong>. Les distances
-       affichées (« à 12 km ») sont calculées entre les centres des communes, pas entre des adresses.</p>
+    <h3 id="localisation">📍 Localisation et recherche « autour de moi »</h3>
+    <ul>
+        <li><strong>Ta commune</strong> (celle de ton code postal) est placée sur la carte par le point GPS de son centre :
+            c'est ce qui permet de montrer tes annonces aux membres proches et d'afficher des distances (« à 12 km »).
+            Ton adresse n'est jamais demandée, et les distances sont toujours calculées entre centres de communes.</li>
+        <li>Le bouton <strong>« Ma position »</strong> de la recherche est facultatif. Il ne s'active que si tu cliques dessus
+            <em>et</em> que tu acceptes la demande de ton navigateur (tu peux refuser ou retirer cette autorisation à tout moment
+            dans les réglages du navigateur). Ta position est envoyée une seule fois à notre serveur pour trouver la ville la plus proche,
+            puis la recherche se fait autour du centre de cette ville. Elle n'est <strong>jamais enregistrée</strong>,
+            ni dans notre base de données ni dans l'adresse de la page.</li>
+    </ul>
     <p>Ton email et ton code postal ne sont jamais affichés. Ton pseudo, ta ville, ton département, tes annonces, ta chaîne
        d'échanges, tes avis et les infos facultatives de ton profil sont publics. Tes messages ne sont visibles que par
        les deux personnes de l'échange. Seuls l'éditeur et l'hébergeur (<?= e(HEBERGEUR_NOM) ?>, en France) ont accès aux données techniques.</p>

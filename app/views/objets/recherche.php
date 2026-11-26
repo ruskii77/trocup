@@ -110,6 +110,7 @@ $moi = utilisateur_connecte();
             <input type="hidden" name="lat" value="<?= e((string) $filtres['lat']) ?>">
             <input type="hidden" name="lon" value="<?= e((string) $filtres['lon']) ?>">
             <button type="button" class="bouton bouton-secondaire bouton-petit" data-ma-position hidden>📍 Ma position</button>
+            <a class="petit lien-discret" href="<?= url('page/confidentialite') ?>#localisation">Ta position n'est jamais enregistrée</a>
             <?php if ($chezMoi): ?>
                 <a class="petit" href="<?= url('objet/recherche', ['autour' => $chezMoi['ville'] . ' (' . $chezMoi['code_postal'] . ')', 'lat' => $chezMoi['latitude'], 'lon' => $chezMoi['longitude'], 'rayon' => 30]) ?>">🏠 Autour de chez moi (<?= e($chezMoi['ville']) ?>)</a>
             <?php endif; ?>
