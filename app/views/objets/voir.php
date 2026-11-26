@@ -56,7 +56,7 @@ $connecte = utilisateur_connecte();
         <?php endif; ?>
         <p class="description"><?= nl2br(e($objet['description'])) ?></p>
 
-        <a href="<?= url('utilisateur/profil', ['id' => $objet['id_utilisateur']]) ?>" class="bloc-proprio">
+        <a href="<?= url('utilisateur/profil', ['id' => $objet['id_utilisateur'], 'slug' => $objet['pseudo']]) ?>" class="bloc-proprio">
             <?= avatar($objet['pseudo'], $objet['avatar'], 48) ?>
             <span>
                 <strong><?= e($objet['pseudo']) ?></strong>

@@ -86,6 +86,12 @@ class Categorie
         Database::get()->prepare('UPDATE categorie SET nom = ? WHERE id = ?')->execute([$nom, $id]);
     }
 
+    // Texte de présentation de la catégorie (référencement)
+    public static function changerDescription(int $id, ?string $description): void
+    {
+        Database::get()->prepare('UPDATE categorie SET description = ? WHERE id = ?')->execute([$description, $id]);
+    }
+
     public static function nombreObjets(int $id): int
     {
         // Toutes les annonces, même retirées : elles font partie de l'historique des chaînes

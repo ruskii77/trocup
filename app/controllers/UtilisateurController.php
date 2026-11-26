@@ -153,7 +153,7 @@ class UtilisateurController extends Controller
                 Mailer::envoyer(
                     $u['email'], 'Réinitialise ton mot de passe', 'Mot de passe oublié ?',
                     "Bonjour {$u['pseudo']},\nTu as demandé à changer ton mot de passe. Ce lien est valable 1 heure.",
-                    URL_SITE . '/' . url('utilisateur/reinitialiser', ['jeton' => $jeton]), 'Choisir un nouveau mot de passe'
+                    url_absolue('utilisateur/reinitialiser', ['jeton' => $jeton]), 'Choisir un nouveau mot de passe'
                 );
             }
             // Message identique que l'email existe ou non (on ne révèle pas qui est inscrit)
@@ -256,8 +256,11 @@ class UtilisateurController extends Controller
             }
 
             if (($_POST['action'] ?? '') === 'notifs') {
-                Utilisateur::changerNotifEmail($u['id'], !empty($_POST['notif_email']));
-                flash('succes', !empty($_POST['notif_email']) ? 'Tu recevras un email pour les nouveaux messages.' : 'Emails de notification désactivés.');
+                $choix = (array) ($_POST['notifs'] ?? []);
+                foreach (array_keys(NotifEmail::TYPES) as $type) {
+                    Utilisateur::changerNotif($u['id'], $type, in_array($type, $choix, true));
+                }
+                flash('succes', 'Tes préférences de notifications sont enregistrées.');
                 $this->rediriger('utilisateur/compte');
             }
 
@@ -382,7 +385,7 @@ class UtilisateurController extends Controller
         Mailer::envoyer(
             $u['email'], 'Confirme ton adresse email', 'Bienvenue ' . $u['pseudo'] . ' !',
             "Il ne reste qu'une étape : confirme ton adresse email pour activer ton compte.\nCe lien est valable 24 heures.",
-            URL_SITE . '/' . url('utilisateur/verifier', ['jeton' => $jeton]), 'Confirmer mon email'
+            url_absolue('utilisateur/verifier', ['jeton' => $jeton]), 'Confirmer mon email'
         );
     }
 

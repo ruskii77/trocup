@@ -14,6 +14,12 @@ abstract class Controller
         $meta = ($donnees['meta'] ?? []) + [
             'description' => 'Échange tes objets contre un peu mieux à chaque fois et construis ta chaîne d\'échanges. Gratuit, près de chez toi.',
             'image'       => URL_SITE . '/img/partage.jpg',
+            // Référencement : par défaut, Google n'indexe PAS la page (comptes, messages, formulaires…).
+            // Les pages publiques utiles (accueil, annonces, catégories, concept) passent 'index, follow' et leur adresse canonique.
+            'robots'      => 'noindex, follow',
+            'canonical'   => null,
+            'jsonld'      => [],   // données structurées (fil d'Ariane…) lues par Google
+            'type'        => 'website',
         ];
         // Nombre de notifications non lues, pour le badge du menu
         $connecte = utilisateur_connecte();
@@ -25,7 +31,8 @@ abstract class Controller
 
     protected function rediriger(string $route, array $params = []): void
     {
-        header('Location: ' . url($route, $params));
+        // Adresse depuis la racine du site : marche aussi quand on est sur une adresse propre (annonce/12-…)
+        header('Location: ' . base_chemin() . ltrim(url($route, $params), './'));
         exit;
     }
 

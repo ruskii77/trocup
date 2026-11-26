@@ -390,6 +390,13 @@ a.badge:hover { background: #dff0e7; }
 .fiche-caracs dt { font-size: .75rem; color: var(--gris); }
 .fiche-caracs dd { margin: 0; font-weight: 700; }
 
+/* V1.9 : texte de présentation d'une catégorie */
+.intro-categorie { color: var(--gris); max-width: 760px; margin: -.3rem 0 1rem; }
+
+/* V1.10 : réglages des notifications par email */
+.liste-notifs label.case { align-items: flex-start; margin: .7rem 0; font-weight: 400; }
+.liste-notifs label.case input { margin-top: .25rem; }
+
 /* Admin : catégories et filtres */
 .admin-categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 .admin-categories h3 { margin-top: 0; }

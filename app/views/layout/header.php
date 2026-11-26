@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tous les liens relatifs (css/…, img/…, annonce/12…) partent du dossier du site, même sur annonce/12-velo -->
+    <base href="<?= e(base_chemin()) ?>">
     <title><?= $nbNotifs > 0 ? '(' . $nbNotifs . ') ' : '' ?><?= e($titrePage) ?></title>
     <meta name="description" content="<?= e($meta['description']) ?>">
+    <meta name="robots" content="<?= e($meta['robots']) ?>">
+    <?php if ($meta['canonical']): ?>
+        <!-- L'adresse « officielle » de la page : évite que Google voie des doublons (?page=…, filtres…) -->
+        <link rel="canonical" href="<?= e($meta['canonical']) ?>">
+    <?php endif; ?>
     <meta name="theme-color" content="#1a9e6c">
 
     <!-- Aperçu quand le lien est partagé sur les réseaux / messageries -->
@@ -12,8 +19,15 @@
     <meta property="og:title" content="<?= e($titrePage) ?>">
     <meta property="og:description" content="<?= e($meta['description']) ?>">
     <meta property="og:image" content="<?= e($meta['image']) ?>">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="<?= e($meta['type']) ?>">
+    <meta property="og:locale" content="fr_FR">
+    <?php if ($meta['canonical']): ?><meta property="og:url" content="<?= e($meta['canonical']) ?>"><?php endif; ?>
     <meta name="twitter:card" content="summary_large_image">
+
+    <?php foreach ($meta['jsonld'] as $donnees): ?>
+        <!-- Données structurées (schema.org) : ce ne sont que des données, aucun code n'est exécuté -->
+        <script type="application/ld+json"><?= json_encode($donnees, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+    <?php endforeach; ?>
 
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">

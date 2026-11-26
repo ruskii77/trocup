@@ -13,6 +13,10 @@ $lienPage = function (int $p) use ($filtres): string {
 $moi = utilisateur_connecte();
 ?>
 <h1><?= $categorie ? e($categorie['nom']) . ' à échanger' : 'Chercher un objet' ?></h1>
+<?php if ($categorie && !empty($categorie['description']) && $page === 1): ?>
+    <!-- Texte de présentation : aide les visiteurs… et Google à comprendre la page -->
+    <p class="intro-categorie"><?= e($categorie['description']) ?></p>
+<?php endif; ?>
 
 <?php if ($sousCategories): ?>
     <!-- Raccourcis : on affine d'un clic -->
@@ -28,8 +32,8 @@ $moi = utilisateur_connecte();
 <?php endif; ?>
 
 <div class="page-recherche">
-    <form method="get" class="carte panneau-filtres">
-        <input type="hidden" name="route" value="objet/recherche">
+    <form method="get" action="<?= urls_propres() ? url('objet/recherche') : 'index.php' ?>" class="carte panneau-filtres">
+        <?php if (!urls_propres()): ?><input type="hidden" name="route" value="objet/recherche"><?php endif; ?>
 
         <label>Mot-clé
             <input type="search" name="q" value="<?= e($filtres['q']) ?>" placeholder="console, vélo…">

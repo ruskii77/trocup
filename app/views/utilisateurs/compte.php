@@ -86,16 +86,19 @@
     </section>
 </div>
 
-<section class="carte">
+<section class="carte" id="notifications">
     <h2>🔔 Notifications par email</h2>
-    <form method="post" action="<?= url('utilisateur/compte') ?>" class="ligne-action">
+    <p class="petit">Choisis ce pour quoi tu veux être prévenu par email. Chaque email contient aussi un lien pour arrêter en un clic.</p>
+    <form method="post" action="<?= url('utilisateur/compte') ?>" class="liste-notifs">
         <?= csrf_champ() ?>
         <input type="hidden" name="action" value="notifs">
-        <label class="case">
-            <input type="checkbox" name="notif_email" value="1" <?= $u['notif_email'] ? 'checked' : '' ?> data-envoi-auto>
-            <span>M'envoyer un email quand je reçois une proposition ou un message (au plus un email par échange tant que je ne l'ai pas lu)</span>
-        </label>
-        <noscript><button class="bouton bouton-petit">Enregistrer</button></noscript>
+        <?php foreach (NotifEmail::TYPES as $type => $t): ?>
+            <label class="case">
+                <input type="checkbox" name="notifs[]" value="<?= $type ?>" <?= !empty($u[$t['colonne']]) ? 'checked' : '' ?>>
+                <span><strong><?= e($t['libelle']) ?></strong><br><span class="petit"><?= e(ucfirst($t['detail'])) ?></span></span>
+            </label>
+        <?php endforeach; ?>
+        <button class="bouton bouton-petit">Enregistrer mes choix</button>
     </form>
 </section>
 

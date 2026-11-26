@@ -1,5 +1,5 @@
 <?php // Petit morceau de vue réutilisé partout : la carte d'une annonce. Attend une variable $o ?>
-<a href="<?= url('objet/voir', ['id' => $o['id']]) ?>" class="carte-objet">
+<a href="<?= url('objet/voir', ['id' => $o['id'], 'slug' => $o['titre']]) ?>" class="carte-objet">
     <div class="carte-objet-photo">
         <img src="<?= photo_objet($o['photo']) ?>" alt="<?= e($o['titre']) ?>" loading="lazy">
         <?php if (!empty($o['est_reserve'])): ?><span class="ruban-reserve">Réservé</span><?php endif; ?>

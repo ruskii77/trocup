@@ -47,6 +47,26 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
 
+## Notifications par email (V1.10)
+
+- Trois types d'emails, chacun activable ou non dans **Mon compte → Notifications** :
+  **intérêt** (quelqu'un ajoute une annonce en favori, sans dire qui, au plus 1 email par jour et par annonce),
+  **propositions** (reçue, acceptée, refusée, annulée), **messages** (1 email par échange tant qu'il n'est pas relu).
+- Chaque email a un lien **« Ne plus recevoir ces emails »** qui marche sans se connecter (lien signé avec `CLE_SECRETE`)
+  et les en-têtes `List-Unsubscribe` : Gmail/Outlook affichent leur bouton « Se désabonner ».
+- Migration `008` : colonnes `notif_interet`, `notif_proposition`, `notif_message` (reprennent l'ancien réglage unique).
+
+## Référencement (V1.9)
+
+- **Adresses propres** : `annonce/12-t-shirt-nike`, `categorie/3-vetements`, `le-concept`… (règle dans `public/.htaccess`,
+  traduction dans `app/core/UrlPropre.php`). Sans le module Apache `mod_rewrite`, le site garde les adresses `index.php?route=…`.
+- **Balises pour Google** sur chaque page : titre, description, `robots` (index ou noindex), adresse `canonical`, Open Graph,
+  fil d'Ariane en données structurées (schema.org). Seules les pages publiques utiles sont indexées ; comptes, messages,
+  formulaires et combinaisons de filtres sont en `noindex`.
+- **`sitemap.xml`** (accueil, catégories, annonces) et **`robots.txt`** générés automatiquement (`SeoController`).
+- **Vraies erreurs 404** pour les adresses qui n'existent pas.
+- Texte de présentation de chaque catégorie (migration `007`), modifiable dans Admin → Catégories et filtres.
+
 ## Catégories et filtres (V1.8)
 
 - **Sous-catégories** : Vêtements › T-shirts, Chaussures… Chercher dans « Vêtements » montre aussi toutes ses sous-catégories.

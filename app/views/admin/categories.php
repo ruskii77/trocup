@@ -29,6 +29,13 @@ $casesCategories = function (array $cochees) use ($arbre): string {
     <?php foreach ($arbre as $p): ?>
         <section class="carte">
             <h3><?= e($p['nom']) ?></h3>
+            <?= $debutForm('description') ?>
+                <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                <label class="petit">Présentation (affichée sur la page de la catégorie et dans Google, 300 caractères max.)
+                    <textarea name="description" rows="3" maxlength="300"><?= e($p['description'] ?? '') ?></textarea>
+                </label>
+                <button class="bouton bouton-secondaire bouton-petit">Enregistrer la présentation</button>
+            </form>
             <?php foreach ($p['enfants'] as $c): ?>
                 <div class="ligne-admin">
                     <?= $debutForm('renommer') ?>

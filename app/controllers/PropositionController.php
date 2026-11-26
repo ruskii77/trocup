@@ -43,7 +43,7 @@ class PropositionController extends Controller
                 if ($message !== '') {
                     Message::envoyer($id, $u['id'], mb_substr($message, 0, 2000));
                 }
-                NotifEmail::prevenir(Proposition::trouverParId($id), (int) $objetDemande['id_utilisateur'], 'Nouvelle proposition d\'échange');
+                NotifEmail::prevenir(Proposition::trouverParId($id), (int) $objetDemande['id_utilisateur'], 'Nouvelle proposition d\'échange', 'proposition');
                 flash('succes', 'Proposition envoyée à ' . $objetDemande['pseudo'] . ' !');
                 $this->rediriger('proposition/voir', ['id' => $id]);
             }
@@ -101,7 +101,7 @@ class PropositionController extends Controller
                 flash('erreur', 'Un des objets n\'est plus disponible, la proposition est annulée.');
             } else {
                 Proposition::accepter($p);
-                NotifEmail::prevenir($p, (int) $p['id_proposeur'], 'Ta proposition a été acceptée 🎉');
+                NotifEmail::prevenir($p, (int) $p['id_proposeur'], 'Ta proposition a été acceptée 🎉', 'proposition');
                 flash('succes', 'Échange accepté ! Organisez la rencontre par message, dans un lieu public.');
             }
         }
@@ -181,6 +181,9 @@ class PropositionController extends Controller
         [$u, $p] = $this->chargerPourParticipant((int) ($_POST['id'] ?? 0));
         if ((int) $p[$role] === (int) $u['id'] && $p['statut'] === 'en_attente') {
             Proposition::changerStatut($p['id'], $statut);
+            // On prévient l'autre membre (s'il a gardé les emails « Propositions d'échange »)
+            $autre = (int) $p['id_proposeur'] === (int) $u['id'] ? (int) $p['id_destinataire'] : (int) $p['id_proposeur'];
+            NotifEmail::prevenir($p, $autre, $statut === 'refusee' ? 'Ta proposition a été refusée' : 'Une proposition qui t\'était faite a été annulée', 'proposition');
             flash('succes', $message);
         } else {
             flash('erreur', 'Action impossible sur cette proposition.');

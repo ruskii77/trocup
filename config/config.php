@@ -63,3 +63,7 @@ defined('MAX_TENTATIVES_CONNEXION') || define('MAX_TENTATIVES_CONNEXION', 5);  /
 defined('MAX_TENTATIVES_IP') || define('MAX_TENTATIVES_IP', 20);        // …ou depuis une même adresse IP…
 defined('DUREE_BLOCAGE_MINUTES') || define('DUREE_BLOCAGE_MINUTES', 15);    // …sur cette durée avant blocage
 defined('ANNONCES_PAR_PAGE') || define('ANNONCES_PAR_PAGE', 12);
+// Clé secrète qui signe les liens « Ne plus recevoir ces emails ».
+// Par défaut, elle est calculée à partir du mot de passe de la base (qui n'est jamais sur GitHub).
+// Tu peux en fixer une dans config.local.php : define('CLE_SECRETE', 'une-longue-phrase-aleatoire');
+defined('CLE_SECRETE') || define('CLE_SECRETE', getenv('CLE_SECRETE') ?: hash('sha256', 'visota|' . DB_NAME . '|' . DB_PASS . '|' . __DIR__));

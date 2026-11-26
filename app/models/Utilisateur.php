@@ -111,9 +111,13 @@ class Utilisateur
         return (int) Database::get()->query('SELECT COUNT(*) FROM utilisateur WHERE est_banni = 0 AND email_verifie = 1 AND supprime = 0')->fetchColumn();
     }
 
-    public static function changerNotifEmail(int $id, bool $actif): void
+    // Active ou coupe un type d'email de notification ('interet', 'proposition' ou 'message', voir NotifEmail::TYPES)
+    public static function changerNotif(int $id, string $type, bool $actif): void
     {
-        Database::get()->prepare('UPDATE utilisateur SET notif_email = ? WHERE id = ?')->execute([$actif ? 1 : 0, $id]);
+        $colonne = NotifEmail::TYPES[$type]['colonne'] ?? null;
+        if ($colonne) { // nom de colonne tiré d'une liste fixe, jamais de la saisie
+            Database::get()->prepare("UPDATE utilisateur SET $colonne = ? WHERE id = ?")->execute([$actif ? 1 : 0, $id]);
+        }
     }
 
     // RGPD — droit à l'effacement.
@@ -130,7 +134,7 @@ class Utilisateur
         $pdo->prepare(
             "UPDATE utilisateur SET pseudo = ?, email = ?, mot_de_passe_hash = ?, ville = '—', code_postal = '00000',
                     departement = '', bio = NULL, avatar = NULL, instagram = NULL, tiktok = NULL, snapchat = NULL,
-                    youtube = NULL, email_verifie = 0, notif_email = 0, supprime = 1
+                    youtube = NULL, email_verifie = 0, notif_interet = 0, notif_proposition = 0, notif_message = 0, supprime = 1
              WHERE id = ?"
         )->execute(['membre_supprime_' . $id, 'supprime-' . $id . '@invalid', password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT), $id]);
         foreach (['jeton', 'favori', 'notif_email'] as $table) {

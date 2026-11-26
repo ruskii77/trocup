@@ -7,10 +7,58 @@ function e($texte): string
     return htmlspecialchars((string) $texte, ENT_QUOTES, 'UTF-8');
 }
 
-// Construit un lien vers une page : url('objet/voir', ['id' => 3]) → index.php?route=objet/voir&id=3
+// Construit un lien vers une page, relatif au dossier du site (voir <base> dans header.php).
+//   url('objet/voir', ['id' => 3, 'slug' => 'T-shirt Nike']) → annonce/3-t-shirt-nike     (URL « propre », bonne pour Google)
+//                                                          ou → index.php?route=objet/voir&id=3  (si la réécriture d'URL n'est pas active)
 function url(string $route, array $params = []): string
 {
+    if (urls_propres()) {
+        $propre = UrlPropre::chemin($route, $params);
+        if ($propre !== null) {
+            return $propre;
+        }
+    }
+    unset($params['slug']); // le slug ne sert qu'aux URL propres
     return 'index.php?' . http_build_query(['route' => $route] + $params);
+}
+
+// La même adresse en version complète (https://visota.fr/annonce/3-…) : emails, balise canonical, sitemap
+function url_absolue(string $route, array $params = []): string
+{
+    return URL_SITE . '/' . ltrim(url($route, $params), './');
+}
+
+// Dossier du site vu depuis le navigateur : « / » en ligne, « /projet-echange/public/ » sous MAMP
+function base_chemin(): string
+{
+    static $base = null;
+    return $base ??= rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php')), '/') . '/';
+}
+
+// Vrai si Apache réécrit les adresses (règle de public/.htaccess, module mod_rewrite actif)
+function urls_propres(): bool
+{
+    return !empty($_SERVER['URLS_PROPRES']) || !empty($_SERVER['REDIRECT_URLS_PROPRES']);
+}
+
+// « T-shirt Nike vintage ! » → « t-shirt-nike-vintage » (pour les adresses)
+function slug(string $texte, int $longueur = 60): string
+{
+    $texte = strtr(mb_strtolower($texte, 'UTF-8'), [
+        'à' => 'a', 'â' => 'a', 'ä' => 'a', 'á' => 'a', 'ã' => 'a', 'å' => 'a',
+        'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+        'î' => 'i', 'ï' => 'i', 'í' => 'i', 'ì' => 'i',
+        'ô' => 'o', 'ö' => 'o', 'ó' => 'o', 'ò' => 'o', 'õ' => 'o',
+        'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ú' => 'u',
+        'ç' => 'c', 'ñ' => 'n', 'ÿ' => 'y', 'œ' => 'oe', 'æ' => 'ae', '&' => ' et ',
+    ]);
+    $texte = trim(preg_replace('/[^a-z0-9]+/', '-', $texte), '-');
+    if (strlen($texte) > $longueur) {
+        // on coupe proprement entre deux mots
+        $texte = substr($texte, 0, $longueur);
+        $texte = strpos($texte, '-') !== false ? substr($texte, 0, strrpos($texte, '-')) : $texte;
+    }
+    return $texte;
 }
 
 // ---------- Jeton CSRF (protège les formulaires contre les envois piégés) ----------
@@ -144,4 +192,27 @@ function badges(array $stats, array $chaine, array $note, array $profil): array
 function date_fr(string $date): string
 {
     return date('d/m/Y à H:i', strtotime($date));
+}
+
+// ---------- Référencement : données structurées ----------
+// Fil d'Ariane lu par Google (Accueil › Vêtements › T-shirts) : $etapes = [['Vêtements', url absolue], …]
+function fil_ariane_jsonld(array $etapes): array
+{
+    $elements = [];
+    foreach (array_merge([[NOM_SITE, url_absolue('accueil')]], $etapes) as $i => [$nom, $adresse]) {
+        $elements[] = ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $nom, 'item' => $adresse];
+    }
+    return ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => $elements];
+}
+
+// Coupe un texte proprement pour une meta description (environ 155 caractères, sans couper un mot)
+function resume(string $texte, int $longueur = 155): string
+{
+    $texte = trim(preg_replace('/\s+/', ' ', $texte));
+    if (mb_strlen($texte) <= $longueur) {
+        return $texte;
+    }
+    $coupe = mb_substr($texte, 0, $longueur);
+    $espace = mb_strrpos($coupe, ' ');
+    return rtrim(mb_substr($coupe, 0, $espace ?: $longueur), ' ,.;:') . '…';
 }

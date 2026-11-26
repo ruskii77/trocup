@@ -2,6 +2,7 @@
 // =====================================================
 //  Point d'entrée unique du site (le "routeur")
 //  Toutes les pages passent par ici : index.php?route=controleur/action
+//  ou une adresse « propre » (annonce/12-velo, categorie/3-vetements…) que public/.htaccess envoie ici
 // =====================================================
 
 require __DIR__ . '/../config/config.php';
@@ -18,6 +19,7 @@ require __DIR__ . '/../app/core/Controller.php';
 require __DIR__ . '/../app/core/Migrations.php';
 require __DIR__ . '/../app/core/Image.php';
 require __DIR__ . '/../app/core/Cookies.php';
+require __DIR__ . '/../app/core/UrlPropre.php';
 
 // Chargement automatique des classes : "ObjetController" → app/controllers/ObjetController.php
 spl_autoload_register(function (string $classe) {
@@ -81,10 +83,31 @@ $routes = [
     'admin/nettoyer'         => ['AdminController', 'nettoyer'],
     'admin/categories'       => ['AdminController', 'categories'],
     'page/concept'           => ['PageController', 'concept'],
+    'page/introuvable'       => ['PageController', 'introuvable'],
+    'notification/desabonner'=> ['NotificationController', 'desabonner'],
+    'seo/robots'             => ['SeoController', 'robots'],
+    'seo/sitemap'            => ['SeoController', 'sitemap'],
 ];
 
 try {
-    $route = $_GET['route'] ?? 'accueil';
+    $route = $_GET['route'] ?? null;
+    if ($route === null) {
+        // Adresse propre : on retrouve la page à partir du chemin (ex : annonce/12-velo → objet/voir, id 12)
+        $chemin = substr(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', strlen(base_chemin()) - 1);
+        $chemin = rawurldecode(trim($chemin, '/'));
+        if ($chemin === '' || $chemin === 'index.php') {
+            $route = 'accueil';
+        } elseif ($trouve = UrlPropre::analyser($chemin)) {
+            [$route, $params] = $trouve;
+            $_GET += $params;
+        } else {
+            $route = 'page/introuvable';
+        }
+    }
+    // Route inconnue → vraie page 404 (Google ne doit pas indexer des pages qui n'existent pas)
+    if (!isset($routes[$route])) {
+        $route = 'page/introuvable';
+    }
 
     // ---------- La base est-elle à jour ? ----------
     $enAttente = Migrations::enAttente();
@@ -94,7 +117,7 @@ try {
             // Premier lancement : on envoie sur la page d'installation
             unset($_SESSION['utilisateur']);
             $route = 'maj/index';
-        } elseif (!in_array($route, ['maj/index', 'utilisateur/connexion', 'utilisateur/deconnexion'], true)) {
+        } elseif (!in_array($route, ['maj/index', 'utilisateur/connexion', 'utilisateur/deconnexion', 'seo/robots'], true)) {
             if (est_admin()) {
                 $route = 'maj/index'; // l'admin est envoyé sur la page de mise à jour
             } else {
@@ -124,7 +147,7 @@ try {
         Maintenance::siNecessaire();
     }
 
-    [$classe, $methode] = $routes[$route] ?? $routes['accueil'];
+    [$classe, $methode] = $routes[$route];
     (new $classe())->$methode();
 
 } catch (PDOException $e) {

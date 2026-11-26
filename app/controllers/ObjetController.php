@@ -25,7 +25,26 @@ class ObjetController extends Controller
             'nbMembres'    => Utilisateur::compter(),
             'nbEchanges'   => Proposition::nombreAcceptees(),
             'meilleurs'    => $meilleurs,
-        ]);
+            'meta'         => [
+                'description' => 'Troc et échange d\'objets entre particuliers, sans argent : échange un objet contre un peu mieux, puis recommence. Vêtements, jeux vidéo, électronique… Gratuit, près de chez toi.',
+                'robots'      => 'index, follow',
+                'canonical'   => url_absolue('accueil'),
+                'jsonld'      => [[
+                    '@context' => 'https://schema.org',
+                    '@type'    => 'WebSite',
+                    'name'     => NOM_SITE,
+                    'url'      => url_absolue('accueil'),
+                    'inLanguage' => 'fr-FR',
+                    'description' => 'Site de troc entre particuliers : l\'échange vers le haut, objet après objet.',
+                ], [
+                    '@context' => 'https://schema.org',
+                    '@type'    => 'Organization',
+                    'name'     => NOM_SITE,
+                    'url'      => url_absolue('accueil'),
+                    'logo'     => URL_SITE . '/img/apple-touch-icon.png',
+                ]],
+            ],
+        ], 'Troc et échange d\'objets entre particuliers');
     }
 
     // Page « Chercher » : tous les filtres + tri + pagination
@@ -41,8 +60,8 @@ class ObjetController extends Controller
             'tri'         => isset(Objet::TRIS[$_GET['tri'] ?? '']) ? $_GET['tri'] : 'recent',
         ];
         $categorie = $filtres['categorie'] ? Categorie::trouver($filtres['categorie']) : null;
-        if (!$categorie) {
-            $filtres['categorie'] = null;
+        if ($filtres['categorie'] && !$categorie) {
+            $this->pageIntrouvable(); // catégorie supprimée ou adresse inventée
         }
         // Filtres propres à la catégorie choisie (Taille, Pointure…)
         $filtres['caracs'] = Caracteristique::filtresRecherche($filtres['categorie'], $_GET['c'] ?? []);
@@ -67,7 +86,37 @@ class ObjetController extends Controller
             // Raccourcis vers les sous-catégories quand une catégorie principale est choisie
             'sousCategories' => ($categorie && $categorie['id_parent'] === null) ? Categorie::enfantsAvecNombre($categorie['id']) : [],
             'caracteristiques' => Caracteristique::pourCategorie($filtres['categorie']),
-        ], $categorie ? $categorie['nom'] . ' à échanger' : 'Chercher un objet');
+            'meta'       => $this->metaRecherche($filtres, $categorie, $page),
+        ], ($categorie ? $categorie['nom'] . ' à échanger entre particuliers' : 'Chercher un objet à échanger') . ($page > 1 ? ' (page ' . $page . ')' : ''));
+    }
+
+    // Référencement de la page Chercher / d'une catégorie.
+    // Indexées : la page « Chercher » et chaque catégorie (avec leurs pages 2, 3…).
+    // Pas indexées : les combinaisons de filtres (mot-clé, département, taille…), sinon Google verrait des milliers de pages presque identiques.
+    private function metaRecherche(array $filtres, ?array $categorie, int $page): array
+    {
+        $filtre = $filtres['q'] !== '' || $filtres['departement'] !== '' || $filtres['etat'] !== ''
+            || $filtres['valeur_min'] !== null || $filtres['valeur_max'] !== null
+            || $filtres['tri'] !== 'recent' || $filtres['caracs'];
+        $base = $categorie ? ['categorie' => $categorie['id']] : [];
+
+        if ($categorie) {
+            $parent = $categorie['id_parent'] ? Categorie::trouver((int) $categorie['id_parent']) : null;
+            $description = $categorie['description'] ?? null
+                ?: $categorie['nom'] . ' à échanger : trouve des ' . mb_strtolower($categorie['nom']) . ' près de chez toi et troque-les contre un objet qui te plaît plus. Gratuit, sans argent, entre particuliers.';
+            $etapes = $parent ? [[$parent['nom'], url_absolue('objet/recherche', ['categorie' => $parent['id']])]] : [];
+            $etapes[] = [$categorie['nom'], url_absolue('objet/recherche', $base)];
+            $jsonld = [fil_ariane_jsonld($etapes)];
+        } else {
+            $description = 'Toutes les annonces de troc : cherche par catégorie, taille, état ou département, et propose un échange. Gratuit et sans argent.';
+            $jsonld = [];
+        }
+        return [
+            'description' => resume($description),
+            'robots'      => $filtre ? 'noindex, follow' : 'index, follow',
+            'canonical'   => url_absolue('objet/recherche', $base + ($page > 1 && !$filtre ? ['page' => $page] : [])),
+            'jsonld'      => $jsonld,
+        ];
     }
 
     public function voir(): void
@@ -93,11 +142,29 @@ class ObjetController extends Controller
             'bloque'       => $u && !$estProprio && Blocage::entre($u['id'], (int) $objet['id_utilisateur']),
             'estProprio'   => $estProprio,
             'note'         => Utilisateur::noteMoyenne((int) $objet['id_utilisateur']),
-            'meta'         => [
-                'description' => 'À échanger sur ' . NOM_SITE . ' : ' . mb_substr($objet['description'], 0, 150),
-                'image'       => $objet['photo'] ? URL_SITE . '/uploads/' . $objet['photo'] : URL_SITE . '/img/partage.jpg',
-            ],
-        ], $objet['titre']);
+            'meta'         => $this->metaAnnonce($objet, $proprietaire),
+        ], $objet['titre'] . ' à échanger' . ($objet['ville'] ? ' à ' . $objet['ville'] : '') . ($objet['departement'] ? ' (' . $objet['departement'] . ')' : ''));
+    }
+
+    // Référencement d'une annonce : description, image, adresse officielle, fil d'Ariane
+    private function metaAnnonce(array $objet, array $proprietaire): array
+    {
+        $visible = $objet['statut'] === 'disponible' && !$proprietaire['est_banni'];
+        $etapes = [];
+        if ($objet['categorie_parente']) {
+            $etapes[] = [$objet['categorie_parente'], url_absolue('objet/recherche', ['categorie' => $objet['id_categorie_parente']])];
+        }
+        $etapes[] = [$objet['categorie'], url_absolue('objet/recherche', ['categorie' => $objet['id_categorie']])];
+        $etapes[] = [$objet['titre'], url_absolue('objet/voir', ['id' => $objet['id'], 'slug' => $objet['titre']])];
+        $lieu = $objet['ville'] ? ' à ' . $objet['ville'] : '';
+        return [
+            'description' => resume($objet['titre'] . ' à échanger' . $lieu . ' : ' . $objet['description']),
+            'image'       => $objet['photo'] ? URL_SITE . '/uploads/' . $objet['photo'] : URL_SITE . '/img/partage.jpg',
+            'robots'      => $visible ? 'index, follow' : 'noindex, nofollow',
+            'canonical'   => url_absolue('objet/voir', ['id' => $objet['id'], 'slug' => $objet['titre']]),
+            'jsonld'      => [fil_ariane_jsonld($etapes)],
+            'type'        => 'article',
+        ];
     }
 
     public function creer(): void
@@ -229,6 +296,9 @@ class ObjetController extends Controller
             $this->pageIntrouvable();
         }
         $ajoute = Favori::basculer($u['id'], $objet['id']);
+        if ($ajoute) {
+            NotifEmail::interet($objet, (int) $u['id']); // « ton annonce plaît » au propriétaire (anonyme)
+        }
         flash('succes', $ajoute ? 'Ajouté à tes favoris ❤️' : 'Retiré de tes favoris.');
         if (($_POST['retour'] ?? '') === 'favoris') {
             $this->rediriger('objet/favoris');

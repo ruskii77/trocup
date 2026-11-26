@@ -140,6 +140,15 @@ class AdminController extends Controller
                 }
                 return 'Catégorie renommée.';
 
+            case 'description':
+                $c = Categorie::trouver($id);
+                $texte = trim($_POST['description'] ?? '');
+                if (!$c || mb_strlen($texte) > 300) {
+                    throw new InvalidArgumentException('Présentation trop longue (300 caractères maximum).');
+                }
+                Categorie::changerDescription($id, $texte === '' ? null : $texte);
+                return "Présentation de « {$c['nom']} » enregistrée.";
+
             case 'supprimer_sous':
                 $c = Categorie::trouver($id);
                 if (!$c || $c['id_parent'] === null) {

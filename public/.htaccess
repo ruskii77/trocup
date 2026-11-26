@@ -1,3 +1,19 @@
+# ===== Adresses « propres » (référencement) =====
+# annonce/12-velo, categorie/3-vetements, le-concept, sitemap.xml… sont envoyées à index.php,
+# qui retrouve la bonne page (voir app/core/UrlPropre.php). Les fichiers qui existent (css, images…) sont servis normalement.
+# Si le module mod_rewrite n'est pas actif, le site garde les adresses index.php?route=… et fonctionne quand même.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Une seule adresse pour Google : www.visota.fr → visota.fr (sinon le site existe « en double »)
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+    # Prévient PHP que la réécriture marche : url() fabrique alors des adresses propres
+    RewriteRule ^ - [E=URLS_PROPRES:1]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
 # ===== Optimisations (ignorées sans risque si le module Apache n'est pas actif) =====
 
 # Compression gzip du HTML, CSS, JS, SVG : 3 à 5× moins de données à télécharger

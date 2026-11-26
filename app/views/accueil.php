@@ -6,8 +6,8 @@
         <p class="hero-intro">Sur <?= e(NOM_SITE) ?>, tu échanges un objet contre un peu mieux… puis tu recommences avec ce que tu as reçu.
            Échange après échange, ta <strong>chaîne</strong> grandit. Gratuit, entre particuliers, près de chez toi.</p>
 
-        <form method="get" class="barre-recherche">
-            <input type="hidden" name="route" value="objet/recherche">
+        <form method="get" action="<?= urls_propres() ? url('objet/recherche') : 'index.php' ?>" class="barre-recherche">
+            <?php if (!urls_propres()): ?><input type="hidden" name="route" value="objet/recherche"><?php endif; ?>
             <input type="search" name="q" placeholder="Que cherches-tu ? (console, vélo…)" aria-label="Rechercher">
             <select name="departement" aria-label="Département">
                 <option value="">Toute la France</option>
@@ -63,7 +63,7 @@
     <h2>🏆 Les plus belles chaînes</h2>
     <div class="podium">
         <?php foreach ($meilleurs as $rang => $m): ?>
-            <a href="<?= url('utilisateur/profil', ['id' => $m['id']]) ?>" class="carte-chaine">
+            <a href="<?= url('utilisateur/profil', ['id' => $m['id'], 'slug' => $m['pseudo']]) ?>" class="carte-chaine">
                 <span class="rang"><?= ['🥇', '🥈', '🥉'][$rang] ?></span>
                 <div class="carte-chaine-qui"><?= avatar($m['pseudo'], $m['avatar'], 44) ?>
                     <span><strong><?= e($m['pseudo']) ?></strong><span class="petit">📍 <?= e($m['ville']) ?> (<?= e($m['departement']) ?>)</span></span>
