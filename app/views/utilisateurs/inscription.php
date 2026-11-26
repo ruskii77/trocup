@@ -11,9 +11,13 @@
         <label>Email <input type="email" name="email" required value="<?= e($valeurs['email']) ?>">
             <span class="aide">Un lien de confirmation y sera envoyé.</span></label>
         <div class="ligne">
-            <label>Code postal <input type="text" name="code_postal" required inputmode="numeric" pattern="\d{5}" maxlength="5" value="<?= e($valeurs['code_postal']) ?>" placeholder="34000"></label>
-            <label>Ville <input type="text" name="ville" required value="<?= e($valeurs['ville']) ?>" placeholder="Montpellier"></label>
+            <label>Code postal <input type="text" name="code_postal" required inputmode="numeric" pattern="\d{5}" maxlength="5" autocomplete="postal-code"
+                                      value="<?= e($valeurs['code_postal']) ?>" data-code-postal="ville-inscription"></label>
+            <label>Ville <input type="text" name="ville" id="ville-inscription" required autocomplete="off" list="ville-inscription-liste" value="<?= e($valeurs['ville']) ?>"
+                                placeholder="Tape d'abord ton code postal">
+                <datalist id="ville-inscription-liste"></datalist></label>
         </div>
+        <p class="aide">Ta ville sert à montrer tes annonces aux gens près de chez toi. Ton adresse exacte n'est jamais demandée.</p>
         <label>Mot de passe <input type="password" name="mot_de_passe" required minlength="8">
             <span class="aide">8 caractères minimum avec 3 types parmi : minuscules, majuscules, chiffres, symboles. Ou une phrase de 16 caractères ou plus.</span></label>
         <label>Confirme le mot de passe <input type="password" name="mot_de_passe_confirmation" required minlength="8"></label>

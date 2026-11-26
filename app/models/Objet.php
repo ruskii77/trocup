@@ -15,7 +15,19 @@ class Objet
         'recent'      => ['Plus récents', 'o.date_publication DESC'],
         'valeur_asc'  => ['Valeur croissante', 'o.valeur_estimee ASC, o.date_publication DESC'],
         'valeur_desc' => ['Valeur décroissante', 'o.valeur_estimee DESC, o.date_publication DESC'],
+        'proche'      => ['Les plus proches', 'distance ASC, o.date_publication DESC'],  // seulement avec « Autour de »
     ];
+
+    // Rayons proposés dans la recherche (km). 0 = « cette ville uniquement »
+    public const RAYONS = [0, 5, 10, 20, 30, 50, 100, 150, 200];
+
+    // Distance en km entre le point cherché et la commune du membre (formule de haversine, calculée par MySQL).
+    // $lat/$lon sont des nombres déjà vérifiés : on peut les écrire dans la requête sans risque d'injection.
+    private static function sqlDistance(float $lat, float $lon): string
+    {
+        return sprintf('(6371 * ACOS(LEAST(1, GREATEST(-1, COS(RADIANS(%1$.6F)) * COS(RADIANS(u.latitude)) * COS(RADIANS(u.longitude) - RADIANS(%2$.6F))'
+            . ' + SIN(RADIANS(%1$.6F)) * SIN(RADIANS(u.latitude))))))', $lat, $lon);
+    }
 
     // Recherche avec filtres + pagination. Renvoie ['objets' => [...], 'total' => nombre de résultats]
     public static function rechercher(array $f, int $page): array
@@ -50,6 +62,20 @@ class Objet
             $where .= ' AND u.departement = ?';
             $params[] = $f['departement'];
         }
+        // Autour d'un point : d'abord un « carré » rapide (index sur latitude/longitude), puis la vraie distance
+        $distance = null;
+        if (isset($f['lat'], $f['lon'], $f['rayon'])) {
+            $rayon = max(1.5, (float) $f['rayon']); // 0 km = la ville elle-même (même point GPS)
+            $distance = self::sqlDistance($f['lat'], $f['lon']);
+            $dLat = $rayon / 111.0;
+            $dLon = $rayon / (111.0 * max(0.05, cos(deg2rad($f['lat']))));
+            $where .= sprintf(' AND u.latitude BETWEEN %.6F AND %.6F AND u.longitude BETWEEN %.6F AND %.6F AND %s <= %.3F',
+                $f['lat'] - $dLat, $f['lat'] + $dLat, $f['lon'] - $dLon, $f['lon'] + $dLon, $distance, $rayon);
+        }
+        if (!empty($f['exclure'])) { // pas ses propres annonces (accueil « Près de chez toi »)
+            $where .= ' AND o.id_utilisateur <> ?';
+            $params[] = (int) $f['exclure'];
+        }
         if ($f['etat'] !== '') {
             $where .= ' AND o.etat = ?';
             $params[] = $f['etat'];
@@ -73,8 +99,13 @@ class Objet
 
         // 2) seulement les annonces de la page demandée
         $ordre = self::TRIS[$f['tri']][1] ?? self::TRIS['recent'][1];
+        if ($f['tri'] === 'proche' && !$distance) {
+            $ordre = self::TRIS['recent'][1];
+        }
         $decalage = ($page - 1) * ANNONCES_PAR_PAGE;
-        $req = $pdo->prepare(self::SELECT . ' ' . $where . ' ORDER BY ' . $ordre . ' LIMIT ' . ANNONCES_PAR_PAGE . ' OFFSET ' . (int) $decalage);
+        // Avec « Autour de », chaque annonce reçoit aussi sa distance (affichée sur la carte : « à 12 km »)
+        $select = $distance ? str_replace('SELECT o.*,', 'SELECT o.*, ' . $distance . ' AS distance,', self::SELECT) : self::SELECT;
+        $req = $pdo->prepare($select . ' ' . $where . ' ORDER BY ' . $ordre . ' LIMIT ' . ANNONCES_PAR_PAGE . ' OFFSET ' . (int) $decalage);
         $req->execute($params);
 
         return ['objets' => $req->fetchAll(), 'total' => $total];

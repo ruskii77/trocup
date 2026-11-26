@@ -60,7 +60,7 @@ $connecte = utilisateur_connecte();
             <?= avatar($objet['pseudo'], $objet['avatar'], 48) ?>
             <span>
                 <strong><?= e($objet['pseudo']) ?></strong>
-                <span class="petit">📍 <?= e($objet['ville']) ?> (<?= e($objet['departement']) ?>)
+                <span class="petit">📍 <?= e($objet['ville']) ?> (<?= e($objet['departement']) ?>)<?php if ($distance !== null): ?> · <strong class="distance"><?= $distance < 1 ? 'dans ta ville' : 'à ' . round($distance) . ' km de chez toi' ?></strong><?php endif; ?>
                 <?php if ($note['nombre'] > 0): ?>
                     · ⭐ <?= number_format((float) $note['moyenne'], 1, ',', '') ?>/5 (<?= $note['nombre'] ?> avis)
                 <?php endif; ?></span>

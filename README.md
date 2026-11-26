@@ -47,6 +47,26 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
 
+## Autour de moi, villes, photos (V1.13)
+
+- **Recherche « Autour de »** une ville ou de « 📍 Ma position », dans un rayon de 0 (cette ville uniquement) à 200 km,
+  tri « les plus proches », distance affichée sur les annonces (« à 12 km ») et « à 27 km de chez toi » sur une annonce.
+  Table `commune` (migration `009`, ~35 000 communes avec un point GPS : INSEE/Etalab + GeoNames CC-BY), colonnes
+  `latitude`/`longitude` des membres. La position du navigateur n'est jamais enregistrée.
+- **Inscription / Mon compte** : plus d'exemple « 34000 Montpellier » ; on tape le code postal, le site propose les villes
+  et vérifie que la ville correspond (nom officiel enregistré).
+- **Photos toujours droites** : remises droites dans le navigateur avant l'envoi + lecture de l'orientation EXIF en PHP
+  (même sans l'extension `exif`). Photos allégées à 2400 px avant l'envoi (plus rapide en 4G).
+- **Nouveau sélecteur de photos** en haut du formulaire : gros bouton « 📷 Ajouter des photos », vignettes,
+  ✕ pour retirer, ★ pour choisir la photo principale, glisser-déposer, 5 photos max. Sans JavaScript : champs classiques.
+
+## Photos iPhone HEIC (V1.12)
+
+- Les photos **HEIC/HEIF** (format des iPhone) sont acceptées : `js/site.js` les convertit en JPEG **dans le navigateur**
+  avant l'envoi, avec le décodeur `public/js/vendor/libheif` (libheif-js, LGPL), téléchargé seulement si besoin.
+- La CSP autorise `'wasm-unsafe-eval'` (WebAssembly de nos fichiers, pas le `eval` JavaScript) et `.htaccess` sert le `.wasm`
+  avec le bon type. Secours côté serveur : conversion avec Imagick s'il sait lire le HEIC, sinon message clair.
+
 ## Téléphone, photos et mots-clés (V1.11)
 
 - **Menu téléphone** (bouton « Menu », marche sans JavaScript) avec tous les libellés : Mes échanges, Mes favoris, Mon profil, Mon compte…

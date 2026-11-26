@@ -78,7 +78,17 @@
     </div>
 <?php endif; ?>
 
-<?php if ($departement): ?>
+<?php if ($chezMoi): ?>
+    <div class="titre-section">
+        <h2>📍 Près de chez toi — autour de <?= e($chezMoi['ville']) ?></h2>
+        <a href="<?= url('objet/recherche', ['autour' => $chezMoi['ville'] . ' (' . $chezMoi['code_postal'] . ')', 'lat' => $chezMoi['latitude'], 'lon' => $chezMoi['longitude'], 'rayon' => 50, 'tri' => 'proche']) ?>">Tout voir →</a>
+    </div>
+    <?php if (!$pres): ?>
+        <p class="vide">Pas encore d'autre annonce à moins de 50 km. Parle du site autour de toi !</p>
+    <?php else: ?>
+        <div class="grille"><?php foreach ($pres as $o) require __DIR__ . '/objets/_carte.php'; ?></div>
+    <?php endif; ?>
+<?php elseif ($departement): ?>
     <div class="titre-section">
         <h2>📍 Près de chez toi — <?= e(nom_departement($departement)) ?></h2>
         <a href="<?= url('objet/recherche', ['departement' => $departement]) ?>">Tout voir →</a>
@@ -130,7 +140,7 @@
 
 <section class="avantages">
     <div><span>🆓</span><strong>100 % gratuit</strong><p class="petit">Pas d'argent entre membres, que des objets.</p></div>
-    <div><span>📍</span><strong>Près de chez toi</strong><p class="petit">Recherche par département pour échanger en main propre.</p></div>
+    <div><span>📍</span><strong>Près de chez toi</strong><p class="petit">Cherche dans un rayon de 0 à 200 km autour de chez toi pour échanger en main propre.</p></div>
     <div><span>⭐</span><strong>Membres notés</strong><p class="petit">Un avis après chaque échange pour savoir à qui tu as affaire.</p></div>
     <div><span>🛡️</span><strong>Modéré</strong><p class="petit">Annonces signalables, comptes vérifiés par email.</p></div>
 </section>

@@ -5,6 +5,7 @@ $lienPage = function (int $p) use ($filtres): string {
         'q' => $filtres['q'], 'categorie' => $filtres['categorie'], 'departement' => $filtres['departement'],
         'etat' => $filtres['etat'], 'valeur_min' => $filtres['valeur_min'], 'valeur_max' => $filtres['valeur_max'],
         'tri' => $filtres['tri'] !== 'recent' ? $filtres['tri'] : null,
+        'autour' => $filtres['lat'] !== null ? $filtres['autour'] : null, 'lat' => $filtres['lat'], 'lon' => $filtres['lon'], 'rayon' => $filtres['rayon'],
     ], fn($v) => $v !== null && $v !== '');
     // Les filtres propres à la catégorie : c[3]=12&c[8]=nike
     $caracs = array_map(fn($f) => $f['valeur'], $filtres['caracs']);
@@ -12,7 +13,7 @@ $lienPage = function (int $p) use ($filtres): string {
 };
 $moi = utilisateur_connecte();
 ?>
-<?php $seulDepartement = !$categorie && $filtres['departement'] !== '' && $filtres['q'] === ''; ?>
+<?php $seulDepartement = !$categorie && $filtres['departement'] !== '' && $filtres['q'] === '' && $filtres['lat'] === null; ?>
 <?php if ($categorie): ?>
     <h1><?= e($categorie['nom']) ?> à échanger</h1>
 <?php elseif ($seulDepartement): ?>
@@ -47,7 +48,7 @@ $moi = utilisateur_connecte();
     <?php
     // Nombre de filtres utilisés (affiché sur le bouton « Filtres » en version téléphone)
     $nbFiltres = count(array_filter([$filtres['q'], $filtres['departement'], $filtres['etat'], $filtres['valeur_min'], $filtres['valeur_max']], fn($v) => $v !== null && $v !== ''))
-        + count($filtres['caracs']) + ($filtres['tri'] !== 'recent' ? 1 : 0);
+        + count($filtres['caracs']) + ($filtres['tri'] !== 'recent' ? 1 : 0) + ($filtres['lat'] !== null ? 1 : 0);
     ?>
     <!-- Sur téléphone, js/site.js replie ce bloc pour montrer d'abord les annonces -->
     <details class="filtres-repliables" open <?= $nbFiltres ? 'data-actifs="1"' : '' ?>>
@@ -99,6 +100,29 @@ $moi = utilisateur_connecte();
             </fieldset>
         <?php endif; ?>
 
+        <!-- Où ? Autour d'une ville (ou de ma position) dans un rayon de 0 à 200 km, comme sur Leboncoin -->
+        <fieldset class="bloc-autour">
+            <legend>📍 Autour de</legend>
+            <input type="search" name="autour" list="autour-liste" data-autour autocomplete="off" maxlength="80"
+                   <?php if ($chezMoi): ?>data-chez-moi="<?= e($chezMoi['ville'] . ' (' . $chezMoi['code_postal'] . ')') ?>" data-chez-moi-lat="<?= e($chezMoi['latitude']) ?>" data-chez-moi-lon="<?= e($chezMoi['longitude']) ?>"<?php endif; ?>
+                   value="<?= e($filtres['autour']) ?>" placeholder="Ville ou code postal" aria-label="Ville ou code postal">
+            <datalist id="autour-liste"></datalist>
+            <input type="hidden" name="lat" value="<?= e((string) $filtres['lat']) ?>">
+            <input type="hidden" name="lon" value="<?= e((string) $filtres['lon']) ?>">
+            <button type="button" class="bouton bouton-secondaire bouton-petit" data-ma-position hidden>📍 Ma position</button>
+            <?php if ($chezMoi): ?>
+                <a class="petit" href="<?= url('objet/recherche', ['autour' => $chezMoi['ville'] . ' (' . $chezMoi['code_postal'] . ')', 'lat' => $chezMoi['latitude'], 'lon' => $chezMoi['longitude'], 'rayon' => 30]) ?>">🏠 Autour de chez moi (<?= e($chezMoi['ville']) ?>)</a>
+            <?php endif; ?>
+            <label>Rayon
+                <select name="rayon">
+                    <option value="">Toute la France</option>
+                    <?php foreach (Objet::RAYONS as $r): ?>
+                        <option value="<?= $r ?>" <?= $filtres['rayon'] === $r ? 'selected' : '' ?>><?= $r === 0 ? 'Cette ville uniquement' : $r . ' km' ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+        </fieldset>
+
         <label>Département
             <select name="departement">
                 <option value="">Toute la France</option>
@@ -130,6 +154,7 @@ $moi = utilisateur_connecte();
         <label>Trier par
             <select name="tri">
                 <?php foreach (Objet::TRIS as $cle => [$libelle]): ?>
+                    <?php if ($cle === 'proche' && $filtres['lat'] === null) continue; // « les plus proches » seulement avec « Autour de » ?>
                     <option value="<?= $cle ?>" <?= $filtres['tri'] === $cle ? 'selected' : '' ?>><?= $libelle ?></option>
                 <?php endforeach; ?>
             </select>
@@ -141,8 +166,13 @@ $moi = utilisateur_connecte();
     </details>
 
     <section class="resultats">
+        <?php if (!empty($filtres['rayonSansLieu'])): ?>
+            <p class="alerte alerte-erreur">Pour chercher dans un rayon, indique une ville dans « 📍 Autour de » ou appuie sur « Ma position ».
+                Pour l'instant, les annonces de toute la France sont affichées.</p>
+        <?php endif; ?>
         <p class="nombre-resultats">
             <strong><?= $total ?></strong> résultat<?= $total > 1 ? 's' : '' ?>
+            <?php if ($filtres['lat'] !== null): ?> · 📍 <?= $filtres['rayon'] === 0 ? 'à ' . e($filtres['autour']) : 'à moins de ' . $filtres['rayon'] . ' km de ' . e($filtres['autour']) ?><?php endif; ?>
             <?php if ($filtres['departement'] !== ''): ?> · 📍 <?= e(nom_departement($filtres['departement'])) ?> (<?= e($filtres['departement']) ?>)<?php endif; ?>
         </p>
 

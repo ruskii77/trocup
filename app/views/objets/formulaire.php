@@ -8,6 +8,37 @@
     <form method="post" enctype="multipart/form-data"
           action="<?= $modification ? url('objet/modifier', ['id' => $valeurs['id']]) : url('objet/creer') ?>">
         <?= csrf_champ() ?>
+        <?php
+        $maxPhotos = 1 + Objet::MAX_PHOTOS_SUP;
+        $photoActuelle = $modification && !empty($valeurs['photo']) ? $valeurs['photo'] : null;
+        $place = Objet::MAX_PHOTOS_SUP - count($photosSup);
+        ?>
+        <!-- 📷 Photos : version confortable (vignettes, ✕, ★). Cachée sans JavaScript : ce sont alors les champs classiques plus bas qui servent. -->
+        <fieldset class="photos-annonce" data-photos-annonce data-max="<?= $maxPhotos ?>" hidden>
+            <legend>📷 Photos <span class="petit">— jusqu'à <?= $maxPhotos ?>. Une annonce avec de belles photos reçoit beaucoup plus de propositions !</span></legend>
+            <div class="grille-photos" data-grille-photos>
+                <?php if ($photoActuelle): ?>
+                    <div class="tuile-photo est-principale" data-existante="principale">
+                        <img src="<?= photo_objet($photoActuelle) ?>" alt="">
+                        <button type="button" class="tuile-etoile">★ Principale</button>
+                    </div>
+                <?php endif; ?>
+                <?php foreach ($photosSup as $ph): ?>
+                    <div class="tuile-photo" data-existante="sup" data-id="<?= $ph['id'] ?>">
+                        <img src="uploads/<?= e($ph['fichier']) ?>" alt="">
+                        <button type="button" class="tuile-retirer" aria-label="Retirer cette photo">✕</button>
+                    </div>
+                <?php endforeach; ?>
+                <label class="ajout-photo" data-ajout-photo tabindex="0" role="button">
+                    <span class="ajout-photo-icone" aria-hidden="true">📷</span>
+                    <strong>Ajouter des photos</strong>
+                    <span class="petit">Galerie ou appareil photo<br>JPG, PNG, WEBP ou HEIC (iPhone)</span>
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple data-choix-photos class="cache-visuel">
+                </label>
+            </div>
+            <p class="petit compteur-photos" data-compteur-photos></p>
+        </fieldset>
+
 
         <label>Titre
             <input type="text" name="titre" maxlength="100" required value="<?= e($valeurs['titre']) ?>" placeholder="Ex : Trombone rouge géant">
@@ -80,30 +111,29 @@
             </div>
         </fieldset>
 
-        <label>Photo principale (JPG, PNG ou WEBP, <?= Image::tailleMaxMo() ?> Mo max.)
-            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp">
-        </label>
-        <?php if ($modification && !empty($valeurs['photo'])): ?>
-            <p class="petit">Photo actuelle : <img src="<?= photo_objet($valeurs['photo']) ?>" alt="" class="miniature"> (laisse vide pour la garder)</p>
-        <?php endif; ?>
-
-        <?php $place = Objet::MAX_PHOTOS_SUP - count($photosSup); ?>
-        <?php if ($photosSup): ?>
-            <p class="label-groupe">Photos supplémentaires</p>
-            <div class="photos-existantes">
-                <?php foreach ($photosSup as $ph): ?>
-                    <label class="photo-existante">
-                        <img src="uploads/<?= e($ph['fichier']) ?>" alt="">
-                        <span><input type="checkbox" name="supprimer_photos[]" value="<?= $ph['id'] ?>"> supprimer</span>
-                    </label>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-        <?php if ($place > 0): ?>
-            <label>Ajouter jusqu'à <?= $place ?> photo<?= $place > 1 ? 's' : '' ?> de plus (autres angles, détails, défauts…)
-                <input type="file" name="photos_sup[]" accept="image/jpeg,image/png,image/webp" multiple>
+        <!-- Champs classiques (utilisés tels quels si JavaScript est désactivé, remplis par js/site.js sinon) -->
+        <div class="champs-photos-classiques" data-champs-classiques>
+            <label>Photo principale (JPG, PNG, WEBP ou HEIC d'iPhone, <?= Image::tailleMaxMo() ?> Mo max.)
+                <input type="file" name="photo" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif">
             </label>
-        <?php endif; ?>
+            <?php if ($photoActuelle): ?>
+                <p class="petit">Photo actuelle : <img src="<?= photo_objet($photoActuelle) ?>" alt="" class="miniature"> (laisse vide pour la garder)</p>
+            <?php endif; ?>
+            <?php if ($photosSup): ?>
+                <p class="label-groupe">Photos supplémentaires</p>
+                <div class="photos-existantes">
+                    <?php foreach ($photosSup as $ph): ?>
+                        <label class="photo-existante">
+                            <img src="uploads/<?= e($ph['fichier']) ?>" alt="">
+                            <span><input type="checkbox" name="supprimer_photos[]" value="<?= $ph['id'] ?>"> supprimer</span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <label>Photos supplémentaires (jusqu'à <?= max(0, $place) ?> de plus : autres angles, détails, défauts…)
+                <input type="file" name="photos_sup[]" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
+            </label>
+        </div>
 
         <button type="submit" class="bouton bouton-grand"><?= $modification ? 'Enregistrer' : 'Mettre en ligne' ?></button>
     </form>

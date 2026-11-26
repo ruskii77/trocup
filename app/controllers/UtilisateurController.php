@@ -37,11 +37,17 @@ class UtilisateurController extends Controller
             if (!filter_var($valeurs['email'], FILTER_VALIDATE_EMAIL))       $erreurs[] = 'Adresse email invalide.';
             elseif (Utilisateur::trouverParEmail($valeurs['email']))         $erreurs[] = 'Un compte existe déjà avec cet email.';
             if ($valeurs['ville'] === '' || mb_strlen($valeurs['ville']) > 100) $erreurs[] = 'Indique ta ville.';
-            if (!$departement)                                               $erreurs[] = 'Code postal français invalide (5 chiffres).';
+            elseif (!$departement)                                           $erreurs[] = 'Code postal français invalide (5 chiffres).';
+            else {
+                [$commune, $err] = $this->verifierCommune($valeurs['code_postal'], $valeurs['ville']);
+                if ($err) $erreurs[] = $err;
+            }
             if ($err = Utilisateur::erreurMotDePasse($_POST['mot_de_passe'] ?? '', $_POST['mot_de_passe_confirmation'] ?? '')) $erreurs[] = $err;
 
             if (!$erreurs) {
-                $id = Utilisateur::creer($valeurs['pseudo'], $valeurs['email'], $_POST['mot_de_passe'], $valeurs['ville'], $valeurs['code_postal'], $departement);
+                // On enregistre le nom officiel de la ville (« Sète » même si on a tapé « sete ») et son point GPS
+                $id = Utilisateur::creer($valeurs['pseudo'], $valeurs['email'], $_POST['mot_de_passe'], $commune['nom'], $valeurs['code_postal'], $departement,
+                                         (float) $commune['latitude'], (float) $commune['longitude']);
                 Limiteur::compter('inscription', $_SERVER['REMOTE_ADDR'] ?? ''); // seules les inscriptions réussies comptent
                 $this->envoyerEmailVerification(Utilisateur::trouverParId($id));
                 $_SESSION['email_en_attente'] = $valeurs['email'];
@@ -206,9 +212,13 @@ class UtilisateurController extends Controller
                 $cp = trim($_POST['code_postal'] ?? '');
                 $dep = departement_depuis_cp($cp);
                 if ($ville === '' || mb_strlen($ville) > 100) $erreurs[] = 'Indique ta ville.';
-                if (!$dep) $erreurs[] = 'Code postal français invalide (5 chiffres).';
+                elseif (!$dep) $erreurs[] = 'Code postal français invalide (5 chiffres).';
+                else {
+                    [$commune, $err] = $this->verifierCommune($cp, $ville);
+                    if ($err) $erreurs[] = $err;
+                }
                 if (!$erreurs) {
-                    Utilisateur::modifierLocalisation($u['id'], $ville, $cp, $dep);
+                    Utilisateur::modifierLocalisation($u['id'], $commune['nom'], $cp, $dep, (float) $commune['latitude'], (float) $commune['longitude']);
                     flash('succes', 'Localisation mise à jour.');
                     $this->rediriger('utilisateur/compte');
                 }
@@ -400,5 +410,21 @@ class UtilisateurController extends Controller
             'id' => (int) $u['id'], 'pseudo' => $u['pseudo'], 'role' => $u['role'],
             'departement' => $u['departement'], 'avatar' => $u['avatar'] ?? null,
         ];
+    }
+
+    // Le code postal existe-t-il et la ville lui correspond-elle ? Renvoie [commune trouvée, message d'erreur]
+    private function verifierCommune(string $cp, string $ville): array
+    {
+        $communes = Commune::pourCodePostal($cp);
+        if (!$communes) {
+            return [null, 'Ce code postal n\'existe pas. Vérifie les 5 chiffres.'];
+        }
+        $commune = Commune::trouver($cp, $ville);
+        if (!$commune) {
+            $noms = array_column(array_slice($communes, 0, 6), 'nom');
+            return [null, 'La ville « ' . $ville . ' » ne correspond pas au code postal ' . $cp . '. Villes possibles : '
+                . implode(', ', $noms) . (count($communes) > 6 ? '…' : '') . '.'];
+        }
+        return [$commune, null];
     }
 }

@@ -1,0 +1,3 @@
+libheif-js 1.23.5 (https://github.com/catdad-experiments/libheif-js) — décodeur de photos HEIC/HEIF (iPhone).
+Licence LGPL-3.0 (voir LICENSE.txt), fichiers d'origine non modifiés.
+Chargé seulement quand un membre choisit une photo HEIC : js/site.js la convertit en JPEG dans le navigateur avant l'envoi.

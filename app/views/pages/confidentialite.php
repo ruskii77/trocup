@@ -12,7 +12,7 @@
         <thead><tr><th>Donnée</th><th>Pourquoi</th><th>Conservée</th></tr></thead>
         <tbody>
             <tr><td>Pseudo, email, mot de passe (chiffré, illisible même pour nous)</td><td>Créer et sécuriser ton compte, t'envoyer les emails du service</td><td>Tant que ton compte existe</td></tr>
-            <tr><td>Code postal, ville</td><td>Montrer tes annonces aux membres proches, recherche par département</td><td>Tant que ton compte existe</td></tr>
+            <tr><td>Code postal, ville (et le point GPS du centre de ta commune, jamais ton adresse)</td><td>Montrer tes annonces aux membres proches, recherche par département ou dans un rayon en km</td><td>Tant que ton compte existe</td></tr>
             <tr><td>Annonces, photos, messages, avis</td><td>Faire fonctionner les échanges entre membres</td><td>Tant que ton compte existe</td></tr>
             <tr><td>Photo de profil, bio, réseaux sociaux (facultatifs)</td><td>Présenter ton profil aux autres membres</td><td>Jusqu'à ce que tu les retires</td></tr>
             <tr><td>Date de dernière connexion</td><td>Supprimer les comptes abandonnés</td><td>Tant que ton compte existe</td></tr>
@@ -27,6 +27,9 @@
        Les photos envoyées sont réenregistrées par le site, ce qui efface leurs métadonnées (dont la position GPS que les téléphones ajoutent parfois).</p>
 
     <h2>Qui voit quoi ?</h2>
+    <p>Le bouton « 📍 Ma position » de la recherche demande ta position à ton navigateur (tu peux refuser). Elle sert seulement
+       à trouver la ville la plus proche pour cette recherche : elle n'est <strong>jamais enregistrée</strong>. Les distances
+       affichées (« à 12 km ») sont calculées entre les centres des communes, pas entre des adresses.</p>
     <p>Ton email et ton code postal ne sont jamais affichés. Ton pseudo, ta ville, ton département, tes annonces, ta chaîne
        d'échanges, tes avis et les infos facultatives de ton profil sont publics. Tes messages ne sont visibles que par
        les deux personnes de l'échange. Seuls l'éditeur et l'hébergeur (<?= e(HEBERGEUR_NOM) ?>, en France) ont accès aux données techniques.</p>

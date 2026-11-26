@@ -21,9 +21,15 @@ class Image
             throw new RuntimeException($max);
         }
         // On vérifie le VRAI type du fichier (pas son extension, qui peut mentir)
-        $type = (new finfo(FILEINFO_MIME_TYPE))->file($fichier['tmp_name']);
+        $chemin = $fichier['tmp_name'];
+        $type = (new finfo(FILEINFO_MIME_TYPE))->file($chemin);
+        // Photo iPhone (HEIC) arrivée telle quelle (navigateur sans JavaScript…) : on tente la conversion sur le serveur
+        if (self::estHeic($chemin, $type)) {
+            $chemin = self::heicVersJpeg($chemin);
+            $type = 'image/jpeg';
+        }
         if (!isset(self::TYPES[$type])) {
-            throw new RuntimeException('Formats acceptés : JPG, PNG ou WEBP.');
+            throw new RuntimeException('Formats acceptés : JPG, PNG, WEBP ou HEIC (iPhone).');
         }
 
         $sousDossier = $format === 'avatar' ? 'avatars/' : '';
@@ -35,14 +41,14 @@ class Image
         // Sans la bibliothèque GD (rare), on garde la photo telle quelle
         if (!function_exists('imagecreatetruecolor')) {
             $nom .= '.' . self::TYPES[$type];
-            if (!move_uploaded_file($fichier['tmp_name'], DOSSIER_UPLOADS . $nom)) {
+            if (!($chemin === $fichier['tmp_name'] ? move_uploaded_file($chemin, DOSSIER_UPLOADS . $nom) : rename($chemin, DOSSIER_UPLOADS . $nom))) {
                 throw new RuntimeException('Impossible d\'enregistrer la photo.');
             }
             return $nom;
         }
 
-        $source = self::ouvrir($fichier['tmp_name'], $type);
-        $source = self::redresser($source, $fichier['tmp_name'], $type);
+        $source = self::ouvrir($chemin, $type);
+        $source = self::redresser($source, $chemin, $type);
         $resultat = $format === 'avatar' ? self::carre($source, 400) : self::reduire($source, 1200);
 
         $nom .= '.jpg';
@@ -51,7 +57,44 @@ class Image
         }
         imagedestroy($source);
         imagedestroy($resultat);
+        if ($chemin !== $fichier['tmp_name'] && is_file($chemin)) {
+            unlink($chemin); // JPEG temporaire issu d'une photo HEIC
+        }
         return $nom;
+    }
+
+    // HEIC/HEIF = format photo des iPhone. Reconnu par son type, ou par sa « signature » (octets 4 à 12 : ftypheic, ftypmif1…)
+    private static function estHeic(string $chemin, string $type): bool
+    {
+        if (in_array($type, ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'], true)) {
+            return true;
+        }
+        $debut = (string) file_get_contents($chemin, false, null, 4, 8);
+        return in_array($debut, ['ftypheic', 'ftypheix', 'ftyphevc', 'ftypheim', 'ftypheis', 'ftypmif1', 'ftypmsf1'], true);
+    }
+
+    // Conversion HEIC → JPEG sur le serveur, possible seulement si l'extension PHP Imagick sait lire le HEIC.
+    // Normalement inutile : js/site.js convertit déjà la photo dans le navigateur avant l'envoi.
+    private static function heicVersJpeg(string $chemin): string
+    {
+        if (!class_exists('Imagick') || !Imagick::queryFormats('HEIC')) {
+            throw new RuntimeException('Cette photo iPhone (HEIC) n\'a pas pu être convertie. Réessaie depuis un navigateur à jour, '
+                . 'ou exporte-la en JPG (sur iPhone : Réglages → Appareil photo → Formats → « Le plus compatible »).');
+        }
+        try {
+            $image = new Imagick($chemin);
+            if (method_exists($image, 'autoOrient')) {
+                $image->autoOrient(); // photo prise de côté → remise droite
+            }
+            $image->setImageFormat('jpeg');
+            $image->setImageCompressionQuality(92);
+            $sortie = tempnam(sys_get_temp_dir(), 'heic') . '.jpg';
+            $image->writeImage($sortie);
+            $image->clear();
+            return $sortie;
+        } catch (ImagickException $e) {
+            throw new RuntimeException('Cette photo iPhone (HEIC) est illisible. Essaie avec une autre photo ou exporte-la en JPG.');
+        }
     }
 
     // Taille maximale réelle d'une photo, en Mo : la plus petite entre celle du site et celle de PHP
@@ -85,14 +128,78 @@ class Image
     }
 
     // Les photos de téléphone sont souvent enregistrées « couchées » avec une info de rotation (EXIF)
+    // Photo prise téléphone en main : l'appareil enregistre l'image « couchée » + une étiquette EXIF « Orientation ».
+    // On applique cette étiquette pour que la photo s'affiche droite (même sans l'extension PHP exif).
     private static function redresser(GdImage $image, string $chemin, string $type): GdImage
     {
-        if ($type !== 'image/jpeg' || !function_exists('exif_read_data')) {
+        if ($type !== 'image/jpeg') {
             return $image;
         }
-        $orientation = @exif_read_data($chemin)['Orientation'] ?? 1;
-        $angle = [3 => 180, 6 => -90, 8 => 90][$orientation] ?? 0;
-        return $angle ? imagerotate($image, $angle, 0) : $image;
+        $orientation = self::orientationExif($chemin);
+        // 2, 4, 5, 7 = photo en miroir (caméra selfie) : on retourne d'abord l'image
+        if (in_array($orientation, [2, 4, 5, 7], true)) {
+            imageflip($image, IMG_FLIP_HORIZONTAL);
+        }
+        // imagerotate tourne dans le sens inverse des aiguilles d'une montre
+        $angle = [3 => 180, 4 => 180, 5 => 90, 6 => -90, 7 => -90, 8 => 90][$orientation] ?? 0;
+        if (!$angle) {
+            return $image;
+        }
+        $tournee = imagerotate($image, $angle, 0);
+        imagedestroy($image);
+        return $tournee;
+    }
+
+    // Lit l'étiquette EXIF « Orientation » (1 à 8) d'un JPEG, directement dans le fichier.
+    // Structure : marqueurs JPEG → bloc APP1 « Exif » → en-tête TIFF (ordre des octets II ou MM) → répertoire IFD0 → étiquette 0x0112.
+    public static function orientationExif(string $chemin): int
+    {
+        if (function_exists('exif_read_data')) {
+            $o = (int) (@exif_read_data($chemin)['Orientation'] ?? 0);
+            if ($o >= 1 && $o <= 8) {
+                return $o;
+            }
+        }
+        $f = @fopen($chemin, 'rb');
+        if (!$f) {
+            return 1;
+        }
+        $orientation = 1;
+        if (fread($f, 2) === "\xFF\xD8") {                       // début d'un JPEG
+            while (!feof($f)) {
+                $marqueur = fread($f, 2);
+                if (strlen($marqueur) < 2 || $marqueur[0] !== "\xFF") {
+                    break;
+                }
+                $taille = unpack('n', fread($f, 2))[1] ?? 0;
+                if ($marqueur === "\xFF\xE1" && $taille > 8) {      // APP1 : peut contenir l'EXIF
+                    $bloc = fread($f, $taille - 2);
+                    if (substr($bloc, 0, 6) === "Exif\0\0") {
+                        $tiff = substr($bloc, 6);
+                        $le = substr($tiff, 0, 2) === 'II';          // II = little-endian, MM = big-endian
+                        $u16 = fn($pos) => unpack($le ? 'v' : 'n', substr($tiff, $pos, 2))[1] ?? 0;
+                        $u32 = fn($pos) => unpack($le ? 'V' : 'N', substr($tiff, $pos, 4))[1] ?? 0;
+                        $ifd = $u32(4);
+                        $n = $u16($ifd);
+                        for ($i = 0; $i < $n && $ifd + 2 + ($i + 1) * 12 <= strlen($tiff); $i++) {
+                            $entree = $ifd + 2 + $i * 12;
+                            if ($u16($entree) === 0x0112) {
+                                $o = $u16($entree + 8);
+                                $orientation = ($o >= 1 && $o <= 8) ? $o : 1;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                if ($marqueur === "\xFF\xDA" || $taille < 2) {      // début de l'image : pas d'EXIF trouvé
+                    break;
+                }
+                fseek($f, $taille - 2, SEEK_CUR);
+            }
+        }
+        fclose($f);
+        return $orientation;
     }
 
     // Copie sur fond blanc (les zones transparentes des PNG deviendraient noires en JPEG)

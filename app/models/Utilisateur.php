@@ -22,13 +22,14 @@ class Utilisateur
         return $req->fetchColumn() > 0;
     }
 
-    public static function creer(string $pseudo, string $email, string $motDePasse, string $ville, string $codePostal, string $departement): int
+    public static function creer(string $pseudo, string $email, string $motDePasse, string $ville, string $codePostal, string $departement,
+                                 ?float $latitude = null, ?float $longitude = null): int
     {
         $req = Database::get()->prepare(
-            'INSERT INTO utilisateur (pseudo, email, mot_de_passe_hash, ville, code_postal, departement) VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO utilisateur (pseudo, email, mot_de_passe_hash, ville, code_postal, departement, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
         // password_hash : le mot de passe n'est JAMAIS stocké en clair
-        $req->execute([$pseudo, $email, password_hash($motDePasse, PASSWORD_DEFAULT), $ville, $codePostal, $departement]);
+        $req->execute([$pseudo, $email, password_hash($motDePasse, PASSWORD_DEFAULT), $ville, $codePostal, $departement, $latitude, $longitude]);
         return (int) Database::get()->lastInsertId();
     }
 
@@ -43,10 +44,10 @@ class Utilisateur
             ->execute([password_hash($motDePasse, PASSWORD_DEFAULT), $id]);
     }
 
-    public static function modifierLocalisation(int $id, string $ville, string $codePostal, string $departement): void
+    public static function modifierLocalisation(int $id, string $ville, string $codePostal, string $departement, ?float $latitude = null, ?float $longitude = null): void
     {
-        Database::get()->prepare('UPDATE utilisateur SET ville = ?, code_postal = ?, departement = ? WHERE id = ?')
-            ->execute([$ville, $codePostal, $departement, $id]);
+        Database::get()->prepare('UPDATE utilisateur SET ville = ?, code_postal = ?, departement = ?, latitude = ?, longitude = ? WHERE id = ?')
+            ->execute([$ville, $codePostal, $departement, $latitude, $longitude, $id]);
     }
 
     // Réseaux sociaux proposés : nom affiché, règle pour le nom d'utilisateur, adresse du profil
@@ -132,7 +133,7 @@ class Utilisateur
         }
         Image::supprimer($u['avatar']);
         $pdo->prepare(
-            "UPDATE utilisateur SET pseudo = ?, email = ?, mot_de_passe_hash = ?, ville = '—', code_postal = '00000',
+            "UPDATE utilisateur SET pseudo = ?, email = ?, mot_de_passe_hash = ?, ville = '—', code_postal = '00000', latitude = NULL, longitude = NULL,
                     departement = '', bio = NULL, avatar = NULL, instagram = NULL, tiktok = NULL, snapchat = NULL,
                     youtube = NULL, email_verifie = 0, notif_interet = 0, notif_proposition = 0, notif_message = 0, supprime = 1
              WHERE id = ?"

@@ -60,3 +60,9 @@
     php_value post_max_size 64M
     php_value memory_limit 256M
 </IfModule>
+
+# ===== Décodeur des photos iPhone (HEIC) =====
+# Le navigateur charge js/vendor/libheif/libheif.wasm : il faut le bon type de fichier
+<IfModule mod_mime.c>
+    AddType application/wasm .wasm
+</IfModule>

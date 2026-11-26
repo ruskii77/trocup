@@ -24,6 +24,11 @@
     <p>Le nom <?= e(NOM_SITE) ?>, le logo et la présentation du site sont la propriété de l'éditeur.
        Les membres restent propriétaires des photos et textes qu'ils publient.</p>
 
+    <h2>Données et logiciels utilisés</h2>
+    <p class="petit">Liste des communes : INSEE / Etalab (Licence Ouverte). Coordonnées GPS des communes :
+       <a href="https://www.geonames.org" rel="noopener">GeoNames</a> (licence CC BY 4.0).
+       Décodage des photos HEIC : libheif-js (licence LGPL-3.0).</p>
+
     <p class="petit">Voir aussi : <a href="<?= url('page/cgu') ?>">Conditions d'utilisation</a> ·
        <a href="<?= url('page/confidentialite') ?>">Politique de confidentialité</a></p>
 </article>

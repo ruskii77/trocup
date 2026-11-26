@@ -85,6 +85,9 @@ $routes = [
     'page/concept'           => ['PageController', 'concept'],
     'page/introuvable'       => ['PageController', 'introuvable'],
     'notification/desabonner'=> ['NotificationController', 'desabonner'],
+    'geo/communes'           => ['GeoController', 'communes'],
+    'geo/recherche'          => ['GeoController', 'recherche'],
+    'geo/autour'             => ['GeoController', 'autour'],
     'seo/robots'             => ['SeoController', 'robots'],
     'seo/sitemap'            => ['SeoController', 'sitemap'],
 ];

@@ -17,6 +17,7 @@ class SeoController extends Controller
         echo "Disallow: /index.php?route=proposition\n";
         echo "Disallow: /index.php?route=notification\n";
         echo "Disallow: /index.php?route=cookies\n";
+        echo "Disallow: /index.php?route=geo\n";
         echo "\n";
         echo 'Sitemap: ' . url_absolue('seo/sitemap') . "\n";
     }

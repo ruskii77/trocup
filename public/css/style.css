@@ -443,6 +443,43 @@ label.case { display: flex; gap: .4rem; align-items: center; }
 .liens-departements { display: flex; flex-wrap: wrap; gap: .5rem; }
 .liens-departements a { background: #eef6f2; border-radius: 999px; padding: .3rem .8rem; text-decoration: none; font-size: .9rem; }
 
+/* ----- V1.13 : photos d'une annonce (gros bouton, vignettes, ✕, ★) ----- */
+.cache-visuel { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.photos-annonce { min-width: 0; border: 2px solid var(--bordure); border-radius: var(--rayon); padding: .6rem 1rem 1rem; margin: 1rem 0; transition: border-color .15s, background .15s; }
+.photos-annonce legend { font-weight: 700; padding: 0 .3rem; }
+.photos-annonce.survol { border-color: var(--vert); background: #f1faf5; }
+.grille-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .7rem; }
+.tuile-photo { position: relative; aspect-ratio: 1; min-width: 0; border-radius: 12px; overflow: hidden; background: #eef1ef; border: 3px solid transparent; }
+.tuile-photo img { width: 100%; height: 100%; max-width: 100%; object-fit: cover; display: block; position: absolute; inset: 0; }
+.tuile-photo.est-principale { border-color: var(--orange); }
+.tuile-photo.retiree img { opacity: .25; filter: grayscale(1); }
+.tuile-attente { display: grid; place-items: center; height: 100%; font-size: 2rem; }
+.tuile-etoile { position: absolute; left: .35rem; bottom: .35rem; right: .35rem; border: none; border-radius: 999px; padding: .3rem .5rem;
+                background: rgba(255,255,255,.92); font-size: .78rem; font-weight: 700; cursor: pointer; color: var(--texte); }
+.est-principale .tuile-etoile { background: var(--orange); color: #fff; }
+.tuile-retirer { position: absolute; top: .35rem; right: .35rem; width: 2rem; height: 2rem; border-radius: 50%; border: none;
+                 background: rgba(20,20,20,.72); color: #fff; font-size: 1rem; cursor: pointer; line-height: 1; }
+.tuile-retirer:hover { background: var(--rouge); }
+.ajout-photo { aspect-ratio: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; text-align: center;
+               border: 2px dashed var(--vert); border-radius: 12px; background: #f1faf5; color: var(--vert-fonce); cursor: pointer; padding: .5rem; margin: 0; font-weight: 400; }
+.ajout-photo:hover, .ajout-photo:focus-visible { background: #e3f4ea; outline: none; border-style: solid; }
+.ajout-photo-icone { font-size: 2.2rem; }
+.ajout-photo strong { font-size: 1rem; }
+.ajout-photo .petit { color: var(--gris); line-height: 1.3; }
+.compteur-photos { margin: .6rem 0 0; }
+.alerte-photos { color: var(--rouge); margin: .3rem 0 0; }
+@media (max-width: 720px) {
+    .grille-photos { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ----- V1.13 : recherche « Autour de » ----- */
+.bloc-autour { border: 1px solid var(--bordure); border-radius: var(--rayon); padding: .5rem .8rem .7rem; margin: .4rem 0 .8rem; }
+.bloc-autour legend { font-weight: 700; padding: 0 .3rem; }
+.bloc-autour input[type=search] { margin-bottom: .4rem; }
+.bloc-autour [data-ma-position] { margin: 0 .5rem .4rem 0; }
+.bloc-autour label { margin-top: .4rem; }
+.distance { color: var(--vert-fonce); }
+
 /* ----- V1.11 : menu téléphone ----- */
 .menu-bascule { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
 .bouton-menu { display: none; align-items: center; gap: .5rem; cursor: pointer; font-weight: 700; padding: .45rem .9rem;

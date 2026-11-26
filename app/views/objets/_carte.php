@@ -8,6 +8,6 @@
         <span class="badge"><?= e($o['categorie']) ?></span>
         <h3><?= e($o['titre']) ?></h3>
         <p class="valeur">≈ <?= prix((float) $o['valeur_estimee']) ?></p>
-        <p class="petit carte-proprio"><?= avatar($o['pseudo'], $o['avatar'] ?? null, 22) ?> <?= e($o['pseudo']) ?> · 📍 <?= e($o['ville']) ?> (<?= e($o['departement']) ?>)</p>
+        <p class="petit carte-proprio"><?= avatar($o['pseudo'], $o['avatar'] ?? null, 22) ?> <?= e($o['pseudo']) ?> · 📍 <?= e($o['ville']) ?> (<?= e($o['departement']) ?>)<?php if (isset($o['distance'])): ?> · <strong class="distance"><?= $o['distance'] < 1 ? 'tout près' : 'à ' . round($o['distance']) . ' km' ?></strong><?php endif; ?></p>
     </div>
 </a>

@@ -16,10 +16,20 @@ class ObjetController extends Controller
             ];
         }
 
+        // « Près de chez toi » : les annonces les plus proches dans un rayon de 50 km (sinon, celles du département)
+        $chez = $this->chezMoi();
+        $pres = $u ? Objet::recentes(4, $u['departement'], $u['id']) : [];
+        if ($chez) {
+            $autour = ['q' => '', 'categorie' => null, 'caracs' => [], 'departement' => '', 'etat' => '', 'valeur_min' => null, 'valeur_max' => null,
+                       'tri' => 'proche', 'lat' => (float) $chez['latitude'], 'lon' => (float) $chez['longitude'], 'rayon' => 50, 'exclure' => $chez['id']];
+            $pres = array_slice(Objet::rechercher($autour, 1)['objets'], 0, 4);
+        }
+
         $this->afficher('accueil', [
             'categories'   => Categorie::avecNombre(),
             'recentes'     => Objet::recentes(8),
-            'pres'         => $u ? Objet::recentes(4, $u['departement'], $u['id']) : [],
+            'pres'         => $pres,
+            'chezMoi'      => $chez,
             'departement'  => $u['departement'] ?? null,
             'total'        => Objet::nombreDisponibles(),
             'nbMembres'    => Utilisateur::compter(),
@@ -60,6 +70,10 @@ class ObjetController extends Controller
             'valeur_max'  => is_numeric($_GET['valeur_max'] ?? '') ? (float) $_GET['valeur_max'] : null,
             'tri'         => isset(Objet::TRIS[$_GET['tri'] ?? '']) ? $_GET['tri'] : 'recent',
         ];
+        $filtres += $this->filtreAutour();
+        if ($filtres['tri'] === 'proche' && $filtres['lat'] === null) {
+            $filtres['tri'] = 'recent';
+        }
         $categorie = $filtres['categorie'] ? Categorie::trouver($filtres['categorie']) : null;
         if ($filtres['categorie'] && !$categorie) {
             $this->pageIntrouvable(); // catégorie supprimée ou adresse inventée
@@ -88,8 +102,46 @@ class ObjetController extends Controller
             'sousCategories' => ($categorie && $categorie['id_parent'] === null) ? Categorie::enfantsAvecNombre($categorie['id']) : [],
             'caracteristiques' => Caracteristique::pourCategorie($filtres['categorie']),
             'villes'     => $filtres['departement'] !== '' ? Objet::villesActives($filtres['departement']) : [],
+            'chezMoi'    => $this->chezMoi(),
             'meta'       => $this->metaRecherche($filtres, $categorie, $page, $resultat['total']),
         ], $this->titreRecherche($filtres, $categorie) . ($page > 1 ? ' (page ' . $page . ')' : ''));
+    }
+
+    // Le membre connecté, s'il a un point GPS (lien « 🏠 Autour de chez moi »)
+    private function chezMoi(): ?array
+    {
+        $moi = utilisateur_connecte();
+        $u = $moi ? Utilisateur::trouverParId($moi['id']) : null;
+        return ($u && $u['latitude'] !== null) ? $u : null;
+    }
+
+    // « Autour de » : une ville (ou « 📍 Ma position ») + un rayon de 0 à 200 km.
+    // Le JavaScript envoie le point GPS (lat/lon) ; sans JavaScript, on cherche la ville tapée dans la table des communes.
+    private function filtreAutour(): array
+    {
+        $autour = mb_substr(trim((string) ($_GET['autour'] ?? '')), 0, 80);
+        $lat = $_GET['lat'] ?? null;
+        $lon = $_GET['lon'] ?? null;
+        $rayon = isset($_GET['rayon']) && $_GET['rayon'] !== '' && in_array((int) $_GET['rayon'], Objet::RAYONS, true) ? (int) $_GET['rayon'] : null;
+        if (!Commune::pointValide($lat, $lon)) {
+            $lat = $lon = null;
+            if ($autour !== '' && ($ville = Commune::rechercher($autour, 1))) {
+                $lat = (float) $ville[0]['latitude'];
+                $lon = (float) $ville[0]['longitude'];
+                $autour = Commune::libelle($ville[0]);
+            }
+        }
+        // Un rayon choisi sans ville : on part de chez le membre connecté (sa commune)
+        if ($lat === null && $rayon !== null && ($chez = $this->chezMoi())) {
+            $lat = (float) $chez['latitude'];
+            $lon = (float) $chez['longitude'];
+            $autour = $chez['ville'] . ' (' . $chez['code_postal'] . ')';
+        }
+        if ($lat === null) {
+            // Visiteur qui a choisi un rayon sans ville : on le prévient au lieu d'ignorer le rayon en silence
+            return ['autour' => $autour, 'lat' => null, 'lon' => null, 'rayon' => null, 'rayonSansLieu' => $rayon !== null];
+        }
+        return ['autour' => $autour !== '' ? $autour : 'Ma position', 'lat' => round((float) $lat, 5), 'lon' => round((float) $lon, 5), 'rayon' => $rayon ?? 30];
     }
 
     // Titre de l'onglet (et du résultat Google) : il reprend les mots que les gens tapent (« troc », « échange », « près de chez vous »)
@@ -110,7 +162,7 @@ class ObjetController extends Controller
     private function metaRecherche(array $filtres, ?array $categorie, int $page, int $total): array
     {
         // Exception : un département seul (troc/34-herault) est une vraie page « troc près de chez vous », indexée
-        $seulDepartement = $filtres['departement'] !== '' && !$categorie && $filtres['q'] === '' && $filtres['etat'] === ''
+        $seulDepartement = $filtres['departement'] !== '' && !$categorie && $filtres['q'] === '' && $filtres['etat'] === '' && $filtres['lat'] === null
             && $filtres['valeur_min'] === null && $filtres['valeur_max'] === null && $filtres['tri'] === 'recent';
         if ($seulDepartement) {
             $code = $filtres['departement'];
@@ -124,7 +176,7 @@ class ObjetController extends Controller
                 'jsonld'      => [fil_ariane_jsonld([['Troc ' . nom_departement($code), url_absolue('objet/recherche', ['departement' => $code])]])],
             ];
         }
-        $filtre = $filtres['q'] !== '' || $filtres['departement'] !== '' || $filtres['etat'] !== ''
+        $filtre = $filtres['q'] !== '' || $filtres['departement'] !== '' || $filtres['etat'] !== '' || $filtres['lat'] !== null
             || $filtres['valeur_min'] !== null || $filtres['valeur_max'] !== null
             || $filtres['tri'] !== 'recent' || $filtres['caracs'];
         $base = $categorie ? ['categorie' => $categorie['id']] : [];
@@ -172,6 +224,10 @@ class ObjetController extends Controller
             'estProprio'   => $estProprio,
             'note'         => Utilisateur::noteMoyenne((int) $objet['id_utilisateur']),
             'meta'         => $this->metaAnnonce($objet, $proprietaire),
+            // « à 12 km de chez toi » (membre connecté, deux communes connues, pas sa propre annonce)
+            'distance'     => ($chez = $this->chezMoi()) && $proprietaire['latitude'] !== null && (int) $chez['id'] !== (int) $proprietaire['id']
+                ? Commune::distance((float) $chez['latitude'], (float) $chez['longitude'], (float) $proprietaire['latitude'], (float) $proprietaire['longitude'])
+                : null,
         ], $objet['titre'] . ' à échanger' . ($objet['ville'] ? ' à ' . $objet['ville'] : '') . ($objet['departement'] ? ' (' . $objet['departement'] . ')' : ''));
     }
 
@@ -272,6 +328,7 @@ class ObjetController extends Controller
                 $this->rediriger('objet/voir', ['id' => $objet['id']]);
             }
             $valeurs['id'] = $objet['id'];
+            $valeurs['photo'] = $objet['photo']; // pour réafficher la photo actuelle si le formulaire a une erreur
         }
 
         $this->afficher('objets/formulaire', [

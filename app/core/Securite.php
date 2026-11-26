@@ -39,14 +39,16 @@ class Securite
         // Politique de sécurité du contenu (CSP) : le navigateur n'exécute QUE les scripts venant de notre site.
         // Si un pirate réussit à glisser un <script> dans une page, le navigateur refusera de l'exécuter.
         // ⚠️ Si un jour tu ajoutes un service externe (statistiques, vidéo YouTube…), il faudra l'autoriser ici.
-        header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        // 'wasm-unsafe-eval' : autorise seulement le WebAssembly de NOS fichiers (décodeur des photos iPhone HEIC), pas le JavaScript « eval ».
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; "
              . "img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; "
              . "base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
              . ($https ? '; upgrade-insecure-requests' : ''));
         header('X-Content-Type-Options: nosniff');           // ne pas « deviner » le type des fichiers
         header('X-Frame-Options: SAMEORIGIN');               // interdit d'afficher le site dans une iframe ailleurs
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+        // geolocation=(self) : seul NOTRE site peut demander la position (bouton « 📍 Ma position » de la recherche)
+        header('Permissions-Policy: camera=(), microphone=(), geolocation=(self), payment=()');
         if ($https) {
             // HSTS : pendant 1 an, le navigateur utilisera toujours https pour ce site
             header('Strict-Transport-Security: max-age=31536000');

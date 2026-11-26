@@ -18,7 +18,7 @@
                 <input type="hidden" name="action" value="avatar">
                 <label class="bouton bouton-secondaire bouton-petit bouton-fichier">
                     📷 <?= $u['avatar'] ? 'Changer la photo' : 'Ajouter une photo' ?>
-                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-envoi-auto>
+                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" data-heic data-envoi-auto>
                 </label>
                 <noscript><button type="submit" class="bouton bouton-petit">Envoyer</button></noscript>
             </form>
@@ -66,8 +66,10 @@
         <form method="post" action="<?= url('utilisateur/compte') ?>">
             <?= csrf_champ() ?>
             <input type="hidden" name="action" value="localisation">
-            <label>Code postal <input type="text" name="code_postal" required pattern="\d{5}" maxlength="5" value="<?= e($u['code_postal']) ?>"></label>
-            <label>Ville <input type="text" name="ville" required value="<?= e($u['ville']) ?>"></label>
+            <label>Code postal <input type="text" name="code_postal" required inputmode="numeric" pattern="\d{5}" maxlength="5" autocomplete="postal-code"
+                                      value="<?= e($u['code_postal']) ?>" data-code-postal="ville-compte"></label>
+            <label>Ville <input type="text" name="ville" id="ville-compte" required autocomplete="off" list="ville-compte-liste" value="<?= e($u['ville']) ?>">
+                <datalist id="ville-compte-liste"></datalist></label>
             <p class="petit">Département actuel : <strong><?= e(nom_departement($u['departement'])) ?> (<?= e($u['departement']) ?>)</strong></p>
             <button type="submit" class="bouton">Enregistrer</button>
         </form>
