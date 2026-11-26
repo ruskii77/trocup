@@ -138,6 +138,15 @@ function prix(float $valeur): string
     return number_format($valeur, 0, ',', ' ') . ' €';
 }
 
+// Adresse d'un fichier CSS ou JS avec sa date de modification : 'js/site.js' → 'js/site.js?v=1732650000'.
+// Les navigateurs gardent ces fichiers en mémoire une semaine (voir public/.htaccess) : quand le fichier change,
+// le numéro change aussi, et tous les téléphones téléchargent la nouvelle version dès la page suivante.
+function fichier_version(string $chemin): string
+{
+    $fichier = __DIR__ . '/../../public/' . $chemin;
+    return e($chemin) . (is_file($fichier) ? '?v=' . filemtime($fichier) : '');
+}
+
 function photo_objet(?string $photo): string
 {
     return $photo ? 'uploads/' . e($photo) : 'img/pas-de-photo.svg';

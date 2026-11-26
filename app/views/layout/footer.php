@@ -34,10 +34,10 @@
     </div>
 </footer>
 <?php require __DIR__ . '/_cookies.php'; ?>
-<script src="js/site.js"></script>
-<script src="js/cookies.js"></script>
+<script src="<?= fichier_version('js/site.js') ?>"></script>
+<script src="<?= fichier_version('js/cookies.js') ?>"></script>
 <?php if (utilisateur_connecte()): ?>
-    <script src="js/notifications.js"></script>
+    <script src="<?= fichier_version('js/notifications.js') ?>"></script>
 <?php endif; ?>
 </body>
 </html>

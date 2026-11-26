@@ -32,7 +32,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
     <!-- ?v=… change quand le fichier change : le navigateur garde le CSS en cache, mais recharge la nouvelle version -->
-    <link rel="stylesheet" href="css/style.css?v=<?= filemtime(__DIR__ . '/../../../public/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= fichier_version('css/style.css') ?>">
 </head>
 <body>
 <header class="entete">

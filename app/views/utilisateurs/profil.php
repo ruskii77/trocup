@@ -149,4 +149,4 @@ $connecte = utilisateur_connecte();
         </div>
     </div>
 </div>
-<script src="js/partage-chaine.js"></script>
+<script src="<?= fichier_version('js/partage-chaine.js') ?>"></script>

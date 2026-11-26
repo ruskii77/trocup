@@ -47,6 +47,12 @@ Chaque changement de structure de la base est un fichier numéroté dans `sql/mi
 
 Pour repartir de zéro (efface tout !) : exécute `sql/reinitialiser.sql`, puis ouvre le site pour réinstaller.
 
+## Nouvelle version vue par tous les téléphones (V1.13.4)
+
+- Les fichiers JavaScript (`js/site.js`…) sont appelés avec leur date de modification (`js/site.js?v=…`, fonction
+  `fichier_version()`), comme le CSS. Avant, les navigateurs gardaient l'ancien fichier jusqu'à une semaine : certains
+  téléphones affichaient encore l'ancien choix de photos au lieu du bouton « 📷 Ajouter des photos ».
+
 ## Audit de sécurité (V1.13.3)
 
 Aucune migration. Corrections après un audit complet du code (injections, XSS, CSRF, accès, envois de fichiers) :
